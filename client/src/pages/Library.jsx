@@ -5,7 +5,7 @@ import BookFormModal from '../components/BookFormModal';
 import DeleteModal from '../components/DeleteModal';
 import InsightModal from '../components/InsightModal';
 import StatCard from '../components/StatCard';
-import { BookOpen, Book, CheckCircle, PlusCircle, Search, Loader } from 'lucide-react';
+import { BookOpen, Book, CheckCircle, PlusCircle, Search } from 'lucide-react';
 
 const STATUSES = [
   { id: 'all', label: 'All Books', icon: BookOpen, color: 'text-gray-600' },
