@@ -17,7 +17,11 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors()); // Allow cross-origin requests
+app.use(cors({
+  origin: '*', // Allows any website (like your S3 bucket) to access the API
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'X-Requested-With', 'Accept']
+}));
 app.use(express.json()); // Body parser for JSON
 
 // API Routes
@@ -30,6 +34,8 @@ app.get('/', (req, res) => {
   res.send('Personal Library API is running...');
 });
 
-const PORT = process.env.PORT || 5001;
+const PORT = 5001;
 
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+});
