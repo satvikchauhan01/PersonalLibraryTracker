@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Lock, KeyRound, Eye, EyeOff, ShieldCheck, ShieldOff, AlertCircle } from 'lucide-react';
+import { X, Lock, ShieldCheck, ShieldOff, AlertCircle } from 'lucide-react';
 import { verifyPin, setupPin, disablePin } from '../services/diaryService';
 
 /**
@@ -12,7 +12,6 @@ import { verifyPin, setupPin, disablePin } from '../services/diaryService';
 const DiaryPinModal = ({ mode = 'unlock', onSuccess, onClose }) => {
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
-  const [showPin, setShowPin] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [shake, setShake] = useState(false);
@@ -26,18 +25,6 @@ const DiaryPinModal = ({ mode = 'unlock', onSuccess, onClose }) => {
   const triggerShake = () => {
     setShake(true);
     setTimeout(() => setShake(false), 600);
-  };
-
-  const handlePinInput = (digit) => {
-    if (pin.length < 6) {
-      setPin((prev) => prev + digit);
-      setError('');
-    }
-  };
-
-  const handleDelete = () => {
-    setPin((prev) => prev.slice(0, -1));
-    setError('');
   };
 
   const handleSubmit = async () => {

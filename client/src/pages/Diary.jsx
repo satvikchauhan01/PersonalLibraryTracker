@@ -13,9 +13,7 @@ import {
 } from '../services/diaryService';
 import DiaryPinModal from '../components/DiaryPinModal';
 import {
-  BookOpen,
   Lock,
-  Unlock,
   Sparkles,
   ChevronLeft,
   ChevronRight,
@@ -23,7 +21,6 @@ import {
   Save,
   Shield,
   ShieldOff,
-  Calendar,
   BarChart3,
   Flame,
   FileText,
@@ -108,10 +105,8 @@ const Diary = () => {
   const [tagInput, setTagInput] = useState('');
 
   // UI
-  const [activeTab, setActiveTab] = useState('editor'); // 'editor' | 'calendar' | 'stats'
   const [toast, setToast] = useState(null);
 
-  const saveTimeoutRef = useRef(null);
   const inactivityTimerRef = useRef(null);
 
   // ── Init: check lock status ─────────────────────────────────────────────
@@ -228,6 +223,7 @@ const Diary = () => {
     if (!isUnlocked || entryLoading) return;
     if (debouncedContent === '' && !entry.title) return; // Don't save empty
     triggerSave();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedContent]);
 
   const triggerSave = async () => {
