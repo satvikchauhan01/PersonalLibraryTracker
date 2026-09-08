@@ -9,19 +9,19 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
-  // Yeh effect load par chalta hai check karne ke liye ki user logged in hai ya nahi
+  // On mount, verify stored token by fetching full profile from /api/auth/me
   useEffect(() => {
     const checkUser = async () => {
       const storedToken = localStorage.getItem('token');
       if (storedToken) {
         setToken(storedToken);
-        // Yahaan hum token se user info decode kar rahe hain
         try {
-          const payload = JSON.parse(atob(storedToken.split('.')[1]));
-          // Asli app mein, aap /api/auth/me endpoint se user data fetch karte
-          setUser({ _id: payload.id, email: "user@email.com" }); // Placeholder email
+          const { data } = await axios.get(`${API_URL}/auth/me`, {
+            headers: { Authorization: `Bearer ${storedToken}` },
+          });
+          setUser(data);
         } catch (e) {
-          console.error("Invalid token");
+          console.error('Token verification failed');
           logout();
         }
       }
@@ -29,7 +29,6 @@ export const AuthProvider = ({ children }) => {
     };
     checkUser();
   }, []);
-
 
   const login = async (email, password) => {
     try {
@@ -39,27 +38,37 @@ export const AuthProvider = ({ children }) => {
       });
       localStorage.setItem('token', data.token);
       setToken(data.token);
-      setUser({ _id: data._id, email: data.email });
+      setUser(data);
       return true;
     } catch (error) {
-      console.error('Login failed', error.response.data);
-      throw new Error(error.response.data.message || 'Login Failed');
+      console.error('Login failed', error.response?.data);
+      throw new Error(error.response?.data?.message || 'Login Failed');
     }
   };
 
-  const register = async (email, password) => {
+  const register = async (userData) => {
     try {
-      const { data } = await axios.post(`${API_URL}/auth/register`, {
-        email,
-        password,
-      });
+      const { data } = await axios.post(`${API_URL}/auth/register`, userData);
       localStorage.setItem('token', data.token);
       setToken(data.token);
-      setUser({ _id: data._id, email: data.email });
+      setUser(data);
       return true;
     } catch (error) {
-      console.error('Registration failed', error.response.data);
-      throw new Error(error.response.data.message || 'Registration Failed');
+      console.error('Registration failed', error.response?.data);
+      throw new Error(error.response?.data?.message || 'Registration Failed');
+    }
+  };
+
+  // Update user profile (called from Profile page)
+  const updateUser = async (profileData) => {
+    try {
+      const { data } = await axios.put(`${API_URL}/auth/update-profile`, profileData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUser((prev) => ({ ...prev, ...data }));
+      return data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Update failed');
     }
   };
 
@@ -70,11 +79,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, updateUser, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
 export default AuthContext;
-

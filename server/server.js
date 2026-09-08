@@ -7,6 +7,7 @@ import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import bookRoutes from './routes/bookRoutes.js';
 import apiRoutes from './routes/apiRoutes.js';
+import diaryRoutes from './routes/diaryRoutes.js';
 
 // Load env variables
 dotenv.config();
@@ -28,6 +29,7 @@ app.use(express.json()); // Body parser for JSON
 app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
 app.use('/api/external', apiRoutes);
+app.use('/api/diary', diaryRoutes);
 
 // Simple test route
 app.get('/', (req, res) => {

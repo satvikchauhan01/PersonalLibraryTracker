@@ -1,10 +1,19 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { BookOpen, Book, User } from 'lucide-react';
+import { BookOpen, Book, User, PenLine, Lock } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
+import { getPinStatus } from '../services/diaryService';
 
 const Navbar = () => {
   const { user } = useContext(AuthContext);
+  const [diaryLocked, setDiaryLocked] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    getPinStatus()
+      .then(({ data }) => setDiaryLocked(data.diaryLockEnabled))
+      .catch(() => {});
+  }, [user]);
 
   const getNavLinkClass = ({ isActive }) =>
     `px-3 py-2 text-sm font-medium rounded-md flex items-center ${
@@ -25,6 +34,13 @@ const Navbar = () => {
               <Book size={16} className="inline mr-1" />
               My Library
             </NavLink>
+            <NavLink to="/diary" className={getNavLinkClass}>
+              <PenLine size={16} className="inline mr-1" />
+              My Diary
+              {diaryLocked && (
+                <Lock size={11} className="inline ml-1 text-indigo-400" />
+              )}
+            </NavLink>
             <NavLink to="/profile" className={getNavLinkClass}>
               <User size={16} className="inline mr-1" />
               My Profile
@@ -33,7 +49,7 @@ const Navbar = () => {
         </div>
         
         <div className="text-sm font-medium text-gray-600">
-           Welcome, {user?.email || 'User'}
+           Welcome, {user?.name || user?.email || 'User'}
         </div>
       </div>
     </header>
