@@ -85,6 +85,88 @@ export const searchGoogleBooks = async (req, res) => {
   }
 };
 
+// @desc    Look up a book by ISBN (Google Books → Open Library fallback)
+// @route   GET /api/external/isbn/:isbn
+// @access  Private
+export const getBookByISBN = async (req, res) => {
+  const { isbn } = req.params;
+
+  // Strip hyphens/spaces for the API calls
+  const cleanIsbn = isbn.replace(/[\s-]/g, '');
+
+  try {
+    // 1. Try Google Books isbn: query
+    const apiKey = process.env.GOOGLE_BOOKS_API_KEY || process.env.GEMINI_API_KEY;
+    const gbUrl = `${GOOGLE_BOOKS_API_URL}isbn:${cleanIsbn}&maxResults=1${apiKey ? `&key=${apiKey}` : ''}`;
+
+    const gbResponse = await fetch(gbUrl, {
+      headers: { 'User-Agent': 'PersonalLibraryTracker/1.0' },
+    });
+
+    if (gbResponse.ok) {
+      const gbData = await gbResponse.json();
+      const items = gbData.items || [];
+
+      if (items.length > 0) {
+        const info = items[0].volumeInfo;
+        return res.json({
+          title: info.title || 'N/A',
+          author: info.authors ? info.authors.join(', ') : 'Unknown Author',
+          genre: info.categories ? info.categories[0] : 'Fiction',
+          coverUrl: info.imageLinks
+            ? info.imageLinks.thumbnail || info.imageLinks.smallThumbnail || ''
+            : '',
+          isbn: cleanIsbn,
+        });
+      }
+    }
+
+    // 2. Fallback: Open Library ISBN API
+    const olResponse = await fetch(`https://openlibrary.org/isbn/${cleanIsbn}.json`, {
+      headers: { 'User-Agent': 'PersonalLibraryTracker/1.0' },
+    });
+
+    if (olResponse.ok) {
+      const olData = await olResponse.json();
+
+      // Resolve author from /authors/:key if present
+      let authorName = 'Unknown Author';
+      if (olData.authors && olData.authors.length > 0) {
+        try {
+          const authorKey = olData.authors[0].key; // e.g. "/authors/OL..."
+          const authorRes = await fetch(`https://openlibrary.org${authorKey}.json`, {
+            headers: { 'User-Agent': 'PersonalLibraryTracker/1.0' },
+          });
+          if (authorRes.ok) {
+            const authorData = await authorRes.json();
+            authorName = authorData.name || 'Unknown Author';
+          }
+        } catch {
+          // silently ignore author resolution failure
+        }
+      }
+
+      // Cover image from Open Library covers API
+      const coverId = olData.covers ? olData.covers[0] : null;
+      const coverUrl = coverId ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg` : '';
+
+      return res.json({
+        title: olData.title || 'N/A',
+        author: authorName,
+        genre: olData.subjects ? olData.subjects[0] : 'General',
+        coverUrl,
+        isbn: cleanIsbn,
+      });
+    }
+
+    // 3. Not found in either source
+    return res.status(404).json({ message: `No book found for ISBN ${isbn}` });
+  } catch (error) {
+    console.error('ISBN lookup error:', error.message);
+    res.status(500).json({ message: 'Error looking up ISBN' });
+  }
+};
+
 // @desc    Get insights from Gemini API
 // @route   POST /api/external/gemini/insights
 // @access  Private

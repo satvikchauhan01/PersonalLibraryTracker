@@ -30,11 +30,24 @@ const bookSchema = mongoose.Schema(
       type: String,
       default: 'https://placehold.co/128x192/475569/ffffff?text=No+Cover',
     },
+    // Phase 03: ISBN as a first-class identifier
+    isbn: {
+      type: String,
+      trim: true,
+      default: null,
+    },
   },
   {
     timestamps: true, // Adds createdAt and updatedAt
   }
 );
+
+// Phase 03: Sparse compound unique index — one user can't add the same ISBN twice,
+// but different users can share ISBNs. sparse:true excludes null/missing isbn values.
+bookSchema.index({ user: 1, isbn: 1 }, { unique: true, sparse: true });
+
+// Text index on title + author for full-text search (used in Phase 06)
+bookSchema.index({ title: 'text', author: 'text' });
 
 const Book = mongoose.model('Book', bookSchema);
 export default Book;

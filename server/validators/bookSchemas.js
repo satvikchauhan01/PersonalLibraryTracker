@@ -8,6 +8,13 @@ export const createBookSchema = z.object({
   genre: z.string().trim().optional(),
   status: statusEnum.optional(),
   coverUrl: z.string().trim().optional(),
+  // Phase 03: ISBN (10 or 13 digits, hyphens allowed)
+  isbn: z
+    .string()
+    .trim()
+    .regex(/^[\d\-X]{10,17}$/, 'ISBN must be 10 or 13 digits')
+    .optional()
+    .nullable(),
 });
 
 export const updateBookSchema = z.object({
@@ -16,4 +23,11 @@ export const updateBookSchema = z.object({
   genre: z.string().trim().optional(),
   status: statusEnum.optional(),
   coverUrl: z.string().trim().optional(),
+  // Phase 03: Allow updating isbn
+  isbn: z
+    .string()
+    .trim()
+    .regex(/^[\d\-X]{10,17}$/, 'ISBN must be 10 or 13 digits')
+    .optional()
+    .nullable(),
 });
