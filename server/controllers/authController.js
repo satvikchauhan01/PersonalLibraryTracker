@@ -24,11 +24,9 @@ const userResponse = (user) => ({
 // @route   POST /api/auth/register
 // @access  Public
 export const registerUser = async (req, res) => {
+  // req.body has already passed registerSchema (trimmed, defaulted) via the
+  // validate middleware in authRoutes.js.
   const { name, email, password, phone, bio, favoriteGenre } = req.body;
-
-  if (!name || !name.trim()) {
-    return res.status(400).json({ message: 'Name is required.' });
-  }
 
   try {
     const userExists = await User.findOne({ email });
@@ -38,12 +36,12 @@ export const registerUser = async (req, res) => {
     }
 
     const user = await User.create({
-      name: name.trim(),
+      name,
       email,
       password,
-      phone: phone || '',
-      bio: bio || '',
-      favoriteGenre: favoriteGenre || '',
+      phone,
+      bio,
+      favoriteGenre,
     });
 
     if (user) {

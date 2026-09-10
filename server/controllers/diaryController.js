@@ -28,10 +28,9 @@ export const getPinStatus = async (req, res) => {
 // @route   POST /api/diary/lock/setup-pin
 // @access  Private
 export const setupPin = async (req, res) => {
+  // req.body.pin has already passed pinSchema (normalized to a 4-6 digit
+  // string) via the validate middleware in diaryRoutes.js.
   const { pin } = req.body;
-  if (!pin || String(pin).length < 4 || String(pin).length > 6) {
-    return res.status(400).json({ message: 'PIN must be 4–6 digits.' });
-  }
 
   try {
     const salt = await bcrypt.genSalt(10);
@@ -54,9 +53,6 @@ export const setupPin = async (req, res) => {
 // @access  Private
 export const verifyPin = async (req, res) => {
   const { pin } = req.body;
-  if (!pin) {
-    return res.status(400).json({ message: 'PIN is required.' });
-  }
 
   try {
     const user = await User.findById(req.user._id).select('+diaryPin diaryLockEnabled');
@@ -88,9 +84,6 @@ export const verifyPin = async (req, res) => {
 // @access  Private
 export const disablePin = async (req, res) => {
   const { pin } = req.body;
-  if (!pin) {
-    return res.status(400).json({ message: 'Current PIN required to disable lock.' });
-  }
 
   try {
     const user = await User.findById(req.user._id).select('+diaryPin');
@@ -154,29 +147,29 @@ export const getEntryByDate = async (req, res) => {
 // @route   PUT /api/diary/entries/:date
 // @access  Private + DiaryLock
 export const saveEntry = async (req, res) => {
+  // req.body has already passed saveEntrySchema (trimmed, defaulted) via the
+  // validate middleware in diaryRoutes.js. `date` is a URL param, not part of
+  // the body, so it's still checked here.
   const { title, content, mood, tags, linkedBook, gratitude } = req.body;
   const { date } = req.params;
 
-  // Validate date format
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD.' });
   }
 
-  const wordCount = content
-    ? content.trim().split(/\s+/).filter(Boolean).length
-    : 0;
+  const wordCount = content ? content.trim().split(/\s+/).filter(Boolean).length : 0;
 
   try {
     const entry = await DiaryEntry.findOneAndUpdate(
       { user: req.user._id, date },
       {
         $set: {
-          title: title || '',
-          content: content || '',
-          mood: mood || 'neutral',
-          tags: tags || [],
+          title,
+          content,
+          mood,
+          tags,
           linkedBook: linkedBook || null,
-          gratitude: gratitude || [],
+          gratitude,
           wordCount,
         },
       },
@@ -238,7 +231,7 @@ export const getDiaryStats = async (req, res) => {
       today.setHours(0, 0, 0, 0);
 
       // Build a Set of date strings for quick lookup
-      const dateSet = new Set(entries.map(e => e.date));
+      const dateSet = new Set(entries.map((e) => e.date));
 
       let current = new Date(today);
       while (true) {
@@ -283,7 +276,10 @@ export const getWritingPrompt = async (req, res) => {
   }
 
   const today = new Date().toLocaleDateString('en-IN', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   });
 
   const userQuery = `Generate ONE short, warm, and reflective personal diary writing prompt for today (${today}). 
