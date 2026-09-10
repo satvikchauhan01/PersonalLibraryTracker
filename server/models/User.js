@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import argon2 from 'argon2';
 
 const userSchema = mongoose.Schema(
   {
@@ -18,6 +19,11 @@ const userSchema = mongoose.Schema(
     password: {
       type: String,
       required: true,
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
     },
     phone: {
       type: String,
@@ -53,18 +59,32 @@ const userSchema = mongoose.Schema(
   }
 );
 
-// Hash password before saving
+// Hash password before saving (Argon2id for anything new/changed)
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
-    next();
+    return next(); // bug fix: was missing `return`, so password got re-hashed on every save
   }
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  this.password = await argon2.hash(this.password, { type: argon2.argon2id });
+  next();
 });
 
-// Method to compare entered password with hashed password
+const isBcryptHash = (hash) => /^\$2[aby]\$/.test(hash);
+
+// Compares entered password with the stored hash. Supports legacy bcrypt
+// hashes: verifies with bcrypt, then transparently re-hashes with argon2id
+// on success (lazy migration) — writes straight to the DB to avoid
+// re-triggering the pre-save hook and double-hashing.
 userSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+  if (isBcryptHash(this.password)) {
+    const isMatch = await bcrypt.compare(enteredPassword, this.password);
+    if (isMatch) {
+      const newHash = await argon2.hash(enteredPassword, { type: argon2.argon2id });
+      this.password = newHash;
+      await this.constructor.updateOne({ _id: this._id }, { $set: { password: newHash } });
+    }
+    return isMatch;
+  }
+  return argon2.verify(this.password, enteredPassword);
 };
 
 // Method to compare entered diary PIN with hashed PIN
