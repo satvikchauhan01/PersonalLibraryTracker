@@ -2,13 +2,18 @@ import React, { useState } from 'react';
 import { logSession } from '../services/readingService';
 import { X, BookOpen, Clock, FileText, TrendingUp } from 'lucide-react';
 
+const getLocalDateStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 const LogSessionModal = ({ book, onClose, onSaved }) => {
   const [form, setForm] = useState({
     pagesRead: '',
     currentPage: book.currentPage || '',
     durationMinutes: '',
     note: '',
-    date: new Date().toISOString().split('T')[0],
+    date: getLocalDateStr(),
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -164,7 +169,7 @@ const LogSessionModal = ({ book, onClose, onSaved }) => {
                 name="date"
                 value={form.date}
                 onChange={handleChange}
-                max={new Date().toISOString().split('T')[0]}
+                max={getLocalDateStr()}
                 className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
               />
             </div>

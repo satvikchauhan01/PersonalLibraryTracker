@@ -45,6 +45,7 @@ const Library = () => {
   const [bookToDelete, setBookToDelete] = useState(null);
   const [insightModal, setInsightModal] = useState({ isOpen: false, book: null });
   const [sessionBook, setSessionBook] = useState(null); // Phase 04: log-session modal
+  const [calendarRefresh, setCalendarRefresh] = useState(0);
 
   // Fetch all books for the user
   const fetchBooks = useCallback(async () => {
@@ -180,7 +181,7 @@ const Library = () => {
 
       {/* Phase 04: Reading Activity Calendar */}
       <div className="mb-10">
-        <ReadingCalendar />
+        <ReadingCalendar refreshTrigger={calendarRefresh} />
       </div>
 
       {/* Status filters & global search */}
@@ -286,7 +287,10 @@ const Library = () => {
         <LogSessionModal
           book={sessionBook}
           onClose={() => setSessionBook(null)}
-          onSaved={fetchBooks}
+          onSaved={() => {
+            fetchBooks();
+            setCalendarRefresh((prev) => prev + 1);
+          }}
         />
       )}
     </>

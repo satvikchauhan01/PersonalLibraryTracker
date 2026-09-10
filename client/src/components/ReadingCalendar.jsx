@@ -2,15 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { getStreak, getCalendar } from '../services/readingService';
 import { Flame, TrendingUp, Calendar } from 'lucide-react';
 
-// Generate the last N days as YYYY-MM-DD strings
+// Generate the last N days as YYYY-MM-DD strings in local time
 const buildDateRange = (days = 365) => {
   const result = [];
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
   for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    result.push(d.toISOString().split('T')[0]);
+    const d = new Date();
+    d.setDate(today.getDate() - i);
+    const localStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    result.push(localStr);
   }
   return result;
 };
@@ -40,7 +40,7 @@ const MONTH_LABELS = [
 ];
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-const ReadingCalendar = () => {
+const ReadingCalendar = ({ refreshTrigger }) => {
   const [calendar, setCalendar] = useState({});
   const [streakData, setStreakData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -61,7 +61,7 @@ const ReadingCalendar = () => {
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, refreshTrigger]);
 
   const dates = buildDateRange(365);
 

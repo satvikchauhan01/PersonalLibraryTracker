@@ -1,8 +1,11 @@
 import Book from '../models/Book.js';
 import ReadingSession from '../models/ReadingSession.js';
 
-// Helper: today as YYYY-MM-DD in local-ish time (UTC date string)
-const todayStr = () => new Date().toISOString().split('T')[0];
+// Helper: today as YYYY-MM-DD in local time
+const getLocalDateStr = (d = new Date()) => {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+const todayStr = () => getLocalDateStr();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROGRESS UPDATE
@@ -163,7 +166,7 @@ export const getStreak = async (req, res) => {
       let counting = true;
 
       while (counting) {
-        const ds = current.toISOString().split('T')[0];
+        const ds = getLocalDateStr(current);
         if (dateSet.has(ds)) {
           streak++;
           current.setDate(current.getDate() - 1);
@@ -171,7 +174,7 @@ export const getStreak = async (req, res) => {
           // Allow grace: if streak === 0 and today hasn't been logged yet, check yesterday
           if (streak === 0) {
             current.setDate(current.getDate() - 1);
-            const yds = current.toISOString().split('T')[0];
+            const yds = getLocalDateStr(current);
             if (dateSet.has(yds)) {
               streak++;
               current.setDate(current.getDate() - 1);
@@ -216,7 +219,7 @@ export const getCalendar = async (req, res) => {
   try {
     const since = new Date();
     since.setDate(since.getDate() - 365);
-    const sinceStr = since.toISOString().split('T')[0];
+    const sinceStr = getLocalDateStr(since);
 
     const sessions = await ReadingSession.aggregate([
       {
