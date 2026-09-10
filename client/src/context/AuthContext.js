@@ -1,43 +1,36 @@
 import React, { createContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import api, { setAccessToken } from '../services/api';
 
 const AuthContext = createContext();
-const API_URL = process.env.REACT_APP_API_URL;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
-  // On mount, verify stored token by fetching full profile from /api/auth/me
+  // On mount, try a silent refresh — the httpOnly cookie may still be valid
+  // from a previous session even though we hold no access token in memory yet.
   useEffect(() => {
-    const checkUser = async () => {
-      const storedToken = localStorage.getItem('token');
-      if (storedToken) {
-        setToken(storedToken);
-        try {
-          const { data } = await axios.get(`${API_URL}/auth/me`, {
-            headers: { Authorization: `Bearer ${storedToken}` },
-          });
-          setUser(data);
-        } catch (e) {
-          console.error('Token verification failed');
-          logout();
-        }
+    const bootstrap = async () => {
+      try {
+        const { data } = await api.post('/auth/refresh');
+        setAccessToken(data.accessToken);
+        const me = await api.get('/auth/me');
+        setUser(me.data);
+      } catch (e) {
+        // No valid session — normal for a logged-out visitor
+        setAccessToken(null);
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
-    checkUser();
+    bootstrap();
   }, []);
 
   const login = async (email, password) => {
     try {
-      const { data } = await axios.post(`${API_URL}/auth/login`, {
-        email,
-        password,
-      });
-      localStorage.setItem('token', data.token);
-      setToken(data.token);
+      const { data } = await api.post('/auth/login', { email, password });
+      setAccessToken(data.accessToken);
       setUser(data);
       return true;
     } catch (error) {
@@ -48,9 +41,8 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const { data } = await axios.post(`${API_URL}/auth/register`, userData);
-      localStorage.setItem('token', data.token);
-      setToken(data.token);
+      const { data } = await api.post('/auth/register', userData);
+      setAccessToken(data.accessToken);
       setUser(data);
       return true;
     } catch (error) {
@@ -62,9 +54,7 @@ export const AuthProvider = ({ children }) => {
   // Update user profile (called from Profile page)
   const updateUser = async (profileData) => {
     try {
-      const { data } = await axios.put(`${API_URL}/auth/update-profile`, profileData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data } = await api.put('/auth/update-profile', profileData);
       setUser((prev) => ({ ...prev, ...data }));
       return data;
     } catch (error) {
@@ -72,14 +62,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
+  const logout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (e) {
+      // ignore — logging out client-side regardless
+    }
+    setAccessToken(null);
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, updateUser, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, updateUser, logout }}>
       {children}
     </AuthContext.Provider>
   );
