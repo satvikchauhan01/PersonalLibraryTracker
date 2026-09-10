@@ -14,9 +14,11 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
     title: '',
     author: '',
     genre: '',
-    status: 'toRead',
+    status: 'wantToRead',
     coverUrl: '',
     isbn: '',
+    totalPages: '',
+    currentPage: '',
   });
 
   // Lookup tab state
@@ -45,6 +47,8 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
         status: editingBook.status,
         coverUrl: editingBook.coverUrl || '',
         isbn: editingBook.isbn || '',
+        totalPages: editingBook.totalPages || '',
+        currentPage: editingBook.currentPage || '',
       });
     } else {
       resetAll();
@@ -52,7 +56,16 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
   }, [editingBook, isOpen]);
 
   const resetAll = () => {
-    setFormState({ title: '', author: '', genre: '', status: 'toRead', coverUrl: '', isbn: '' });
+    setFormState({
+      title: '',
+      author: '',
+      genre: '',
+      status: 'wantToRead',
+      coverUrl: '',
+      isbn: '',
+      totalPages: '',
+      currentPage: '',
+    });
     setIsbnQuery('');
     setIsbnError('');
     setIsbnSuccess(false);
@@ -73,7 +86,7 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
     if (!raw) return;
 
     // Basic sanity check — 10 or 13 digits (hyphens stripped)
-    const digits = raw.replace(/[\s\-]/g, '');
+    const digits = raw.replace(/[\s-]/g, '');
     if (!/^\d{10}(\d{3})?$/.test(digits) && !/^\d{9}X$/i.test(digits)) {
       setIsbnError('Please enter a valid 10- or 13-digit ISBN.');
       return;
@@ -90,8 +103,10 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
         author: book.author || '',
         genre: book.genre || '',
         coverUrl: book.coverUrl || '',
-        status: 'toRead',
+        status: 'wantToRead',
         isbn: book.isbn || digits,
+        totalPages: '',
+        currentPage: '',
       });
       setIsbnSuccess(true);
     } catch (err) {
@@ -134,8 +149,10 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
       author: book.author,
       genre: book.genre,
       coverUrl: book.coverUrl,
-      status: 'toRead',
+      status: 'wantToRead',
       isbn: '',
+      totalPages: '',
+      currentPage: '',
     });
     setSearchResults([]);
     setSearchQuery('');
@@ -150,6 +167,9 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
     const payload = {
       ...formState,
       isbn: formState.isbn.trim() || null,
+      // Phase 04: coerce progress fields to numbers or omit
+      totalPages: formState.totalPages !== '' ? Number(formState.totalPages) : undefined,
+      currentPage: formState.currentPage !== '' ? Number(formState.currentPage) : undefined,
     };
 
     try {
@@ -407,10 +427,46 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
               onChange={handleInputChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border bg-white"
             >
-              <option value="toRead">To Read</option>
-              <option value="currentlyReading">Currently Reading</option>
+              <option value="wantToRead">Want to Read</option>
+              <option value="reading">Reading</option>
               <option value="completed">Completed</option>
+              <option value="onHold">On Hold</option>
+              <option value="dnf">Did Not Finish (DNF)</option>
             </select>
+          </div>
+
+          {/* Phase 04: Page tracking fields */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="totalPages" className="block text-sm font-medium text-gray-700">
+                Total Pages <span className="text-xs font-normal text-gray-400">(optional)</span>
+              </label>
+              <input
+                type="number"
+                name="totalPages"
+                id="totalPages"
+                value={formState.totalPages}
+                onChange={handleInputChange}
+                min="0"
+                placeholder="e.g. 320"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
+              />
+            </div>
+            <div>
+              <label htmlFor="currentPage" className="block text-sm font-medium text-gray-700">
+                Current Page <span className="text-xs font-normal text-gray-400">(optional)</span>
+              </label>
+              <input
+                type="number"
+                name="currentPage"
+                id="currentPage"
+                value={formState.currentPage}
+                onChange={handleInputChange}
+                min="0"
+                placeholder="e.g. 0"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
+              />
+            </div>
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">

@@ -21,7 +21,18 @@ export const getBooks = async (req, res) => {
 // @access  Private
 export const addBook = async (req, res) => {
   // req.body has already passed createBookSchema via the validate middleware
-  const { title, author, genre, status, coverUrl, isbn } = req.body;
+  const {
+    title,
+    author,
+    genre,
+    status,
+    coverUrl,
+    isbn,
+    currentPage,
+    totalPages,
+    startDate,
+    finishDate,
+  } = req.body;
 
   try {
     // Phase 03: Duplicate detection
@@ -64,10 +75,15 @@ export const addBook = async (req, res) => {
       title,
       author,
       genre,
-      status,
+      status: status || 'wantToRead',
       coverUrl: coverUrl || undefined, // Let the default apply if empty
       isbn: isbn || null,
       user: req.user.id, // Link to the logged-in user
+      // Phase 04: progress fields
+      currentPage: currentPage || 0,
+      totalPages: totalPages || 0,
+      startDate: startDate || null,
+      finishDate: finishDate || null,
     });
 
     const createdBook = await book.save();
@@ -87,7 +103,18 @@ export const addBook = async (req, res) => {
 // @route   PUT /api/books/:id
 // @access  Private
 export const updateBook = async (req, res) => {
-  const { title, author, genre, status, coverUrl, isbn } = req.body;
+  const {
+    title,
+    author,
+    genre,
+    status,
+    coverUrl,
+    isbn,
+    currentPage,
+    totalPages,
+    startDate,
+    finishDate,
+  } = req.body;
 
   try {
     const book = await Book.findById(req.params.id);
@@ -110,6 +137,11 @@ export const updateBook = async (req, res) => {
     if (isbn !== undefined) {
       book.isbn = isbn || null;
     }
+    // Phase 04: Allow updating progress fields
+    if (currentPage !== undefined) book.currentPage = currentPage;
+    if (totalPages !== undefined) book.totalPages = totalPages;
+    if (startDate !== undefined) book.startDate = startDate || null;
+    if (finishDate !== undefined) book.finishDate = finishDate || null;
 
     const updatedBook = await book.save();
     res.json(updatedBook);

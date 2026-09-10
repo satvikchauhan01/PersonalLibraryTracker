@@ -11,6 +11,7 @@ import authRoutes from './routes/authRoutes.js';
 import bookRoutes from './routes/bookRoutes.js';
 import apiRoutes from './routes/apiRoutes.js';
 import diaryRoutes from './routes/diaryRoutes.js';
+import readingRoutes from './routes/readingRoutes.js'; // Phase 04
 
 // Load env variables
 dotenv.config();
@@ -70,6 +71,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
 app.use('/api/external', apiRoutes);
 app.use('/api/diary', diaryRoutes);
+app.use('/api', readingRoutes); // Phase 04: progress, sessions, streak, calendar
 
 // Simple test route
 app.get('/', (req, res) => {

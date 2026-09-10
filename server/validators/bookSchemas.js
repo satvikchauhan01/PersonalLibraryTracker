@@ -1,6 +1,14 @@
 import { z } from 'zod';
 
-const statusEnum = z.enum(['toRead', 'currentlyReading', 'completed']);
+// Phase 04: extended status set (old values kept for migration compatibility)
+const statusEnum = z.enum(['wantToRead', 'reading', 'completed', 'dnf', 'onHold']);
+
+// ISO date string OR Date-coercible string
+const dateString = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD')
+  .optional()
+  .nullable();
 
 export const createBookSchema = z.object({
   title: z.string({ required_error: 'Title is required' }).trim().min(1, 'Title is required'),
@@ -15,6 +23,11 @@ export const createBookSchema = z.object({
     .regex(/^[\d\-X]{10,17}$/, 'ISBN must be 10 or 13 digits')
     .optional()
     .nullable(),
+  // Phase 04: reading progress
+  currentPage: z.number().int().min(0).optional(),
+  totalPages: z.number().int().min(0).optional(),
+  startDate: dateString,
+  finishDate: dateString,
 });
 
 export const updateBookSchema = z.object({
@@ -30,4 +43,9 @@ export const updateBookSchema = z.object({
     .regex(/^[\d\-X]{10,17}$/, 'ISBN must be 10 or 13 digits')
     .optional()
     .nullable(),
+  // Phase 04: reading progress
+  currentPage: z.number().int().min(0).optional(),
+  totalPages: z.number().int().min(0).optional(),
+  startDate: dateString,
+  finishDate: dateString,
 });

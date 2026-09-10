@@ -5,30 +5,48 @@ import BookFormModal from '../components/BookFormModal';
 import DeleteModal from '../components/DeleteModal';
 import InsightModal from '../components/InsightModal';
 import StatCard from '../components/StatCard';
-import { BookOpen, Book, CheckCircle, PlusCircle, Search } from 'lucide-react';
+import LogSessionModal from '../components/LogSessionModal';
+import ReadingCalendar from '../components/ReadingCalendar';
+import {
+  BookOpen,
+  Book,
+  CheckCircle,
+  PlusCircle,
+  Search,
+  Clock,
+  XCircle,
+  PauseCircle,
+} from 'lucide-react';
 
+// Phase 04: extended status list
 const STATUSES = [
   { id: 'all', label: 'All Books', icon: BookOpen, color: 'text-gray-600' },
-  { id: 'toRead', label: 'To Read', icon: PlusCircle, color: 'text-blue-500' },
-  { id: 'currentlyReading', label: 'Reading Now', icon: Book, color: 'text-yellow-500' },
+  { id: 'wantToRead', label: 'Want to Read', icon: PlusCircle, color: 'text-blue-500' },
+  { id: 'reading', label: 'Reading', icon: Book, color: 'text-yellow-500' },
   { id: 'completed', label: 'Completed', icon: CheckCircle, color: 'text-green-500' },
+  { id: 'onHold', label: 'On Hold', icon: PauseCircle, color: 'text-gray-500' },
+  { id: 'dnf', label: 'DNF', icon: XCircle, color: 'text-red-400' },
 ];
+
+// Toggle cycles only the 3 "active" statuses; dnf/onHold set via Edit modal
+const TOGGLE_CYCLE = { wantToRead: 'reading', reading: 'completed', completed: 'wantToRead' };
 
 const Library = () => {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Filtering aur Search States
+  // Filtering & search
   const [activeFilter, setActiveFilter] = useState('all');
   const [globalSearchTerm, setGlobalSearchTerm] = useState('');
 
-  // Modal States
+  // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
   const [bookToDelete, setBookToDelete] = useState(null);
   const [insightModal, setInsightModal] = useState({ isOpen: false, book: null });
+  const [sessionBook, setSessionBook] = useState(null); // Phase 04: log-session modal
 
-  // Backend API se books fetch karna
+  // Fetch all books for the user
   const fetchBooks = useCallback(async () => {
     setLoading(true);
     try {
@@ -44,7 +62,7 @@ const Library = () => {
     fetchBooks();
   }, [fetchBooks]);
 
-  // --- CRUD Operations ---
+  // ── CRUD ─────────────────────────────────────────────────────────────────
 
   const handleSaveBook = async (bookData) => {
     try {
@@ -53,11 +71,10 @@ const Library = () => {
       } else {
         await api.post('/books', bookData);
       }
-      fetchBooks(); // Re-fetch all books
-      return true; // Success
+      fetchBooks();
+      return true;
     } catch (error) {
-      // Re-throw so the modal can display the specific error (e.g. 409 conflict)
-      throw error;
+      throw error; // Let modal display the specific error (e.g. 409 conflict)
     }
   };
 
@@ -66,47 +83,38 @@ const Library = () => {
     try {
       await api.delete(`/books/${bookToDelete._id}`);
       setBookToDelete(null);
-      fetchBooks(); // Sab books re-fetch karein
+      fetchBooks();
     } catch (error) {
       console.error('Error deleting book:', error);
     }
   };
 
+  // Phase 04: cycles wantToRead → reading → completed → wantToRead only
   const handleToggleStatus = async (book) => {
-    let newStatus;
-    if (book.status === 'toRead') newStatus = 'currentlyReading';
-    else if (book.status === 'currentlyReading') newStatus = 'completed';
-    else newStatus = 'toRead';
-
+    const newStatus = TOGGLE_CYCLE[book.status] || 'wantToRead';
     try {
       await api.put(`/books/${book._id}`, { status: newStatus });
-      fetchBooks(); // Re-fetch
+      fetchBooks();
     } catch (error) {
       console.error('Error updating status:', error);
     }
   };
 
-  // --- Modal Handlers ---
+  // ── MODAL HANDLERS ────────────────────────────────────────────────────────
 
   const openAddModal = () => {
     setEditingBook(null);
     setIsModalOpen(true);
   };
-
   const openEditModal = (book) => {
     setEditingBook(book);
     setIsModalOpen(true);
   };
+  const openDeleteModal = (book) => setBookToDelete(book);
+  const openInsightModal = (book) => setInsightModal({ isOpen: true, book });
+  const openSessionModal = (book) => setSessionBook(book); // Phase 04
 
-  const openDeleteModal = (book) => {
-    setBookToDelete(book);
-  };
-
-  const openInsightModal = (book) => {
-    setInsightModal({ isOpen: true, book });
-  };
-
-  // --- Filtering aur Stats ---
+  // ── FILTERING & STATS ─────────────────────────────────────────────────────
 
   const filteredBooks = useMemo(() => {
     const term = globalSearchTerm.toLowerCase();
@@ -128,9 +136,11 @@ const Library = () => {
   const stats = useMemo(
     () => ({
       total: books.length,
-      toRead: books.filter((b) => b.status === 'toRead').length,
-      currentlyReading: books.filter((b) => b.status === 'currentlyReading').length,
+      wantToRead: books.filter((b) => b.status === 'wantToRead' || b.status === 'toRead').length,
+      reading: books.filter((b) => b.status === 'reading' || b.status === 'currentlyReading')
+        .length,
       completed: books.filter((b) => b.status === 'completed').length,
+      onHold: books.filter((b) => b.status === 'onHold').length,
     }),
     [books]
   );
@@ -141,35 +151,41 @@ const Library = () => {
 
   return (
     <>
-      {/* Profile Stats */}
-      <div className="mb-12">
+      {/* Reading stats */}
+      <div className="mb-8">
         <h2 className="text-3xl font-extrabold text-gray-900 mb-6">My Reading Stats</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           <StatCard
             label="Total Books"
             value={stats.total}
             icon={BookOpen}
             color="text-indigo-600"
           />
-          <StatCard label="To Read" value={stats.toRead} icon={PlusCircle} color="text-blue-500" />
           <StatCard
-            label="Reading Now"
-            value={stats.currentlyReading}
-            icon={Book}
-            color="text-yellow-500"
+            label="Want to Read"
+            value={stats.wantToRead}
+            icon={PlusCircle}
+            color="text-blue-500"
           />
+          <StatCard label="Reading" value={stats.reading} icon={Book} color="text-yellow-500" />
           <StatCard
             label="Completed"
             value={stats.completed}
             icon={CheckCircle}
             color="text-green-500"
           />
+          <StatCard label="On Hold" value={stats.onHold} icon={Clock} color="text-gray-500" />
         </div>
       </div>
 
-      {/* Status Filters aur Global Search */}
+      {/* Phase 04: Reading Activity Calendar */}
+      <div className="mb-10">
+        <ReadingCalendar />
+      </div>
+
+      {/* Status filters & global search */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b pb-4">
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2">
           {STATUSES.map((status) => (
             <button
               key={status.id}
@@ -204,7 +220,7 @@ const Library = () => {
         </div>
       </div>
 
-      {/* Book List */}
+      {/* Book list */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800">
           {STATUSES.find((s) => s.id === activeFilter)?.label}
@@ -233,6 +249,7 @@ const Library = () => {
               onEdit={openEditModal}
               onDelete={openDeleteModal}
               onGetInsights={openInsightModal}
+              onLogSession={openSessionModal} // Phase 04
             />
           ))}
         </div>
@@ -261,6 +278,15 @@ const Library = () => {
           isOpen={insightModal.isOpen}
           onClose={() => setInsightModal({ isOpen: false, book: null })}
           book={insightModal.book}
+        />
+      )}
+
+      {/* Phase 04: Log Session Modal */}
+      {sessionBook && (
+        <LogSessionModal
+          book={sessionBook}
+          onClose={() => setSessionBook(null)}
+          onSaved={fetchBooks}
         />
       )}
     </>

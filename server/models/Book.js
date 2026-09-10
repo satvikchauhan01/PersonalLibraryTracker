@@ -20,11 +20,12 @@ const bookSchema = mongoose.Schema(
       type: String,
       default: 'N/A',
     },
+    // Phase 04: extended status enum (toRead/currentlyReading kept for migration compat)
     status: {
       type: String,
       required: true,
-      enum: ['toRead', 'currentlyReading', 'completed'],
-      default: 'toRead',
+      enum: ['wantToRead', 'reading', 'completed', 'dnf', 'onHold', 'toRead', 'currentlyReading'],
+      default: 'wantToRead',
     },
     coverUrl: {
       type: String,
@@ -34,6 +35,25 @@ const bookSchema = mongoose.Schema(
     isbn: {
       type: String,
       trim: true,
+      default: null,
+    },
+    // Phase 04: Reading progress fields
+    currentPage: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    totalPages: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    startDate: {
+      type: Date,
+      default: null,
+    },
+    finishDate: {
+      type: Date,
       default: null,
     },
   },
