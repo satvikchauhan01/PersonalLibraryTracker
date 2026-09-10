@@ -20,11 +20,13 @@ const bookSchema = mongoose.Schema(
       type: String,
       default: 'N/A',
     },
-    // Phase 04: extended status enum (toRead/currentlyReading kept for migration compat)
+    // Phase 04: extended status enum. Legacy 'toRead'/'currentlyReading' values
+    // were migrated by scripts/migratePhase04.js and are no longer accepted —
+    // this now matches the Zod statusEnum in validators/bookSchemas.js exactly.
     status: {
       type: String,
       required: true,
-      enum: ['wantToRead', 'reading', 'completed', 'dnf', 'onHold', 'toRead', 'currentlyReading'],
+      enum: ['wantToRead', 'reading', 'completed', 'dnf', 'onHold'],
       default: 'wantToRead',
     },
     coverUrl: {

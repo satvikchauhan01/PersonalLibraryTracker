@@ -142,18 +142,14 @@ export const getSessions = async (req, res) => {
 // @access  Private
 export const getStreak = async (req, res) => {
   try {
-    const sessions = await ReadingSession.find({ user: req.user.id }).select('date').lean();
+    const sessions = await ReadingSession.find({ user: req.user.id })
+      .select('date pagesRead')
+      .lean();
 
     let streak = 0;
     let longestStreak = 0;
-    let totalSessions = sessions.length;
-    let totalPages = 0;
-
-    // Also need total pages — fetch separately for calendar data re-use
-    const allSessions = await ReadingSession.find({ user: req.user.id })
-      .select('date pagesRead')
-      .lean();
-    totalPages = allSessions.reduce((sum, s) => sum + (s.pagesRead || 0), 0);
+    const totalSessions = sessions.length;
+    const totalPages = sessions.reduce((sum, s) => sum + (s.pagesRead || 0), 0);
 
     if (sessions.length > 0) {
       // Build a Set of unique date strings

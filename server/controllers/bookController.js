@@ -143,6 +143,18 @@ export const updateBook = async (req, res) => {
     if (startDate !== undefined) book.startDate = startDate || null;
     if (finishDate !== undefined) book.finishDate = finishDate || null;
 
+    // Phase 04 fix: readingController's progress/session endpoints auto-set
+    // startDate/finishDate on status transitions, but this endpoint — used by
+    // the toggle button and the Edit form's status dropdown — didn't, so a
+    // book could sit at "Reading" or "Completed" with no date ever recorded.
+    // Mirror the same guarded (only-if-missing) behavior here.
+    if (book.status === 'reading' && !book.startDate) {
+      book.startDate = new Date();
+    }
+    if (book.status === 'completed' && !book.finishDate) {
+      book.finishDate = new Date();
+    }
+
     const updatedBook = await book.save();
     res.json(updatedBook);
   } catch (error) {
