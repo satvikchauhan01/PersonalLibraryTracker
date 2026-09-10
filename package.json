@@ -1,0 +1,17 @@
+{
+  "name": "personal-library-tracker",
+  "private": true,
+  "description": "Root tooling only (Husky + lint-staged) — the app itself lives in client/ and server/.",
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3"
+  },
+  "lint-staged": {
+    "server/**/*.js": ["prettier --write"],
+    "client/src/**/*.{js,jsx}": ["prettier --write"]
+  }
+}

@@ -17,11 +17,9 @@ export const getBooks = async (req, res) => {
 // @route   POST /api/books
 // @access  Private
 export const addBook = async (req, res) => {
+  // req.body has already passed createBookSchema via the validate middleware
+  // in bookRoutes.js.
   const { title, author, genre, status, coverUrl } = req.body;
-
-  if (!title || !author) {
-    return res.status(400).json({ message: 'Title and Author are required' });
-  }
 
   try {
     const book = new Book({
