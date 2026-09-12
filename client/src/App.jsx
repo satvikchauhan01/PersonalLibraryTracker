@@ -4,6 +4,7 @@ import AuthContext from './context/AuthContext';
 import Library from './pages/Library';
 import Profile from './pages/Profile';
 import Diary from './pages/Diary';
+import Shelves from './pages/Shelves';
 import AuthScreen from './components/AuthScreen';
 import Navbar from './components/Navbar';
 import { Loader } from 'lucide-react';
@@ -27,6 +28,7 @@ function App() {
           <main className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
             <Routes>
               <Route path="/" element={<Library />} />
+              <Route path="/shelves" element={<Shelves />} />
               <Route path="/diary" element={<Diary />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="*" element={<Navigate to="/" />} />
@@ -44,4 +46,3 @@ function App() {
 }
 
 export default App;
-

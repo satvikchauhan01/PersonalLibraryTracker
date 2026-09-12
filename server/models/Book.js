@@ -58,6 +58,21 @@ const bookSchema = mongoose.Schema(
       type: Date,
       default: null,
     },
+    // Phase 05: Ratings & organization
+    rating: {
+      type: Number,
+      default: null,
+      min: 0,
+      max: 5,
+    },
+    isFavorite: {
+      type: Boolean,
+      default: false,
+    },
+    tags: {
+      type: [String],
+      default: [],
+    },
   },
   {
     timestamps: true, // Adds createdAt and updatedAt

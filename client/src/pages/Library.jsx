@@ -7,6 +7,8 @@ import InsightModal from '../components/InsightModal';
 import StatCard from '../components/StatCard';
 import LogSessionModal from '../components/LogSessionModal';
 import ReadingCalendar from '../components/ReadingCalendar';
+import BookDetailModal from '../components/BookDetailModal';
+import { setRating, toggleFavorite } from '../services/organizationService';
 import {
   BookOpen,
   Book,
@@ -46,6 +48,7 @@ const Library = () => {
   const [insightModal, setInsightModal] = useState({ isOpen: false, book: null });
   const [sessionBook, setSessionBook] = useState(null); // Phase 04: log-session modal
   const [calendarRefresh, setCalendarRefresh] = useState(0);
+  const [detailBook, setDetailBook] = useState(null); // Phase 05: review/notes/quotes/tags modal
 
   // Fetch all books for the user
   const fetchBooks = useCallback(async () => {
@@ -101,6 +104,29 @@ const Library = () => {
     }
   };
 
+  // Phase 05: rating & favorite — optimistic local update, revert on failure
+  const handleSetRating = async (book, rating) => {
+    setBooks((prev) => prev.map((b) => (b._id === book._id ? { ...b, rating } : b)));
+    try {
+      await setRating(book._id, rating);
+    } catch (error) {
+      console.error('Error setting rating:', error);
+      fetchBooks();
+    }
+  };
+
+  const handleToggleFavorite = async (book) => {
+    setBooks((prev) =>
+      prev.map((b) => (b._id === book._id ? { ...b, isFavorite: !b.isFavorite } : b))
+    );
+    try {
+      await toggleFavorite(book._id);
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      fetchBooks();
+    }
+  };
+
   // ── MODAL HANDLERS ────────────────────────────────────────────────────────
 
   const openAddModal = () => {
@@ -114,6 +140,7 @@ const Library = () => {
   const openDeleteModal = (book) => setBookToDelete(book);
   const openInsightModal = (book) => setInsightModal({ isOpen: true, book });
   const openSessionModal = (book) => setSessionBook(book); // Phase 04
+  const openDetailModal = (book) => setDetailBook(book); // Phase 05
 
   // ── FILTERING & STATS ─────────────────────────────────────────────────────
 
@@ -251,6 +278,9 @@ const Library = () => {
               onDelete={openDeleteModal}
               onGetInsights={openInsightModal}
               onLogSession={openSessionModal} // Phase 04
+              onSetRating={handleSetRating} // Phase 05
+              onToggleFavorite={handleToggleFavorite} // Phase 05
+              onOpenDetails={openDetailModal} // Phase 05
             />
           ))}
         </div>
@@ -291,6 +321,15 @@ const Library = () => {
             fetchBooks();
             setCalendarRefresh((prev) => prev + 1);
           }}
+        />
+      )}
+
+      {/* Phase 05: Review / Notes / Quotes / Tags */}
+      {detailBook && (
+        <BookDetailModal
+          book={detailBook}
+          onClose={() => setDetailBook(null)}
+          onUpdated={fetchBooks}
         />
       )}
     </>

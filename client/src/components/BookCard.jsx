@@ -1,5 +1,6 @@
 import React from 'react';
-import { Settings, Edit, Trash2, Zap, BookMarked } from 'lucide-react';
+import { Settings, Edit, Trash2, Zap, BookMarked, Heart, MessageSquare } from 'lucide-react';
+import StarRating from './StarRating';
 
 // Phase 04: extended status map
 const STATUS_MAP = {
@@ -13,7 +14,17 @@ const STATUS_MAP = {
   currentlyReading: { label: 'Reading', color: 'bg-yellow-100 text-yellow-800' },
 };
 
-const BookCard = ({ book, onToggleStatus, onEdit, onDelete, onGetInsights, onLogSession }) => {
+const BookCard = ({
+  book,
+  onToggleStatus,
+  onEdit,
+  onDelete,
+  onGetInsights,
+  onLogSession,
+  onSetRating,
+  onToggleFavorite,
+  onOpenDetails,
+}) => {
   const statusDisplay = STATUS_MAP[book.status] || {
     label: book.status,
     color: 'bg-gray-100 text-gray-700',
@@ -27,23 +38,54 @@ const BookCard = ({ book, onToggleStatus, onEdit, onDelete, onGetInsights, onLog
 
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col md:flex-row transform transition duration-300 hover:shadow-xl">
-      <img
-        src={book.coverUrl}
-        alt={`Cover for ${book.title}`}
-        className="w-full md:w-32 h-48 object-cover object-center md:h-auto flex-shrink-0"
-        onError={(e) => {
-          e.target.onerror = null;
-          e.target.src = 'https://placehold.co/128x192/475569/ffffff?text=No+Cover';
-        }}
-      />
+      <div className="relative w-full md:w-32 h-48 md:h-auto flex-shrink-0">
+        <img
+          src={book.coverUrl}
+          alt={`Cover for ${book.title}`}
+          className="w-full h-full object-cover object-center"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = 'https://placehold.co/128x192/475569/ffffff?text=No+Cover';
+          }}
+        />
+        {/* Phase 05: Favorite toggle */}
+        <button
+          onClick={() => onToggleFavorite(book)}
+          className="absolute top-2 right-2 p-1.5 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
+          title={book.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+        >
+          <Heart
+            size={16}
+            className={book.isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-400'}
+          />
+        </button>
+      </div>
       <div className="p-4 flex flex-col justify-between flex-grow">
         <div>
           <h3 className="text-xl font-bold text-gray-800 line-clamp-2">{book.title}</h3>
           <p className="text-sm text-gray-500 italic">by {book.author}</p>
           <p className="text-xs text-gray-400 mb-2">Genre: {book.genre || 'N/A'}</p>
-          <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusDisplay.color}`}>
-            {statusDisplay.label}
-          </span>
+          <div className="flex items-center flex-wrap gap-2 mb-1">
+            <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusDisplay.color}`}>
+              {statusDisplay.label}
+            </span>
+            {/* Phase 05: Star rating */}
+            <StarRating value={book.rating} onChange={(r) => onSetRating(book, r)} size={15} />
+          </div>
+
+          {/* Phase 05: Tag chips */}
+          {book.tags?.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {book.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="text-[11px] font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
 
           {/* Phase 04: Progress bar */}
           {hasProgress && (
@@ -92,6 +134,14 @@ const BookCard = ({ book, onToggleStatus, onEdit, onDelete, onGetInsights, onLog
             title="Log Reading Session"
           >
             <BookMarked size={18} />
+          </button>
+          {/* Phase 05: Review / Notes / Quotes / Tags */}
+          <button
+            onClick={() => onOpenDetails(book)}
+            className="flex items-center justify-center p-2 bg-teal-500 text-white rounded-full hover:bg-teal-600 transition duration-150 shadow-md"
+            title="Review, Notes & Quotes"
+          >
+            <MessageSquare size={18} />
           </button>
           <button
             onClick={() => onGetInsights(book)}

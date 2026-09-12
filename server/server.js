@@ -12,6 +12,9 @@ import bookRoutes from './routes/bookRoutes.js';
 import apiRoutes from './routes/apiRoutes.js';
 import diaryRoutes from './routes/diaryRoutes.js';
 import readingRoutes from './routes/readingRoutes.js'; // Phase 04
+import organizationRoutes from './routes/organizationRoutes.js'; // Phase 05
+import shelfRoutes from './routes/shelfRoutes.js'; // Phase 05
+import quoteRoutes from './routes/quoteRoutes.js'; // Phase 05
 
 // Load env variables
 dotenv.config();
@@ -72,6 +75,9 @@ app.use('/api/books', bookRoutes);
 app.use('/api/external', apiRoutes);
 app.use('/api/diary', diaryRoutes);
 app.use('/api', readingRoutes); // Phase 04: progress, sessions, streak, calendar
+app.use('/api', organizationRoutes); // Phase 05: rating, favorite, tags, review, notes
+app.use('/api/shelves', shelfRoutes); // Phase 05
+app.use('/api/quotes', quoteRoutes); // Phase 05
 
 // Simple test route
 app.get('/', (req, res) => {
