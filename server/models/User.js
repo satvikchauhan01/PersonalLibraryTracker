@@ -53,6 +53,57 @@ const userSchema = mongoose.Schema(
       default: null,
       select: false, // never returned in regular queries
     },
+    // Phase 08: mutual friends list (kept in sync on both users when a
+    // request is accepted — see friendController.acceptFriendRequest)
+    friends: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+      default: [],
+    },
+    // Phase 09: Library Pro — the fast denormalized gate check. Subscription
+    // (the full billing history/lifecycle) lives in its own collection;
+    // this field is what every requirePro/quota check actually reads.
+    isPro: {
+      type: Boolean,
+      default: false,
+    },
+    // Free-tier Gemini usage — reset the first time a call lands in a new
+    // month (see middleware/checkAiQuota.js).
+    aiCallCount: {
+      type: Number,
+      default: 0,
+    },
+    aiCallMonth: {
+      type: String,
+      default: null,
+    },
+    // Phase 11: per-category opt-outs for the reminder/notification system.
+    // Read by services/notificationService.js before it ever creates a
+    // notification — see PREF_KEY_BY_TYPE there for the type → key mapping.
+    notificationPrefs: {
+      readingReminders: { type: Boolean, default: true },
+      goalReminders: { type: Boolean, default: true },
+      continueReadingNudges: { type: Boolean, default: true },
+      streakAlerts: { type: Boolean, default: true },
+    },
+    // Phase 12: password-reset flow. Same shape as diaryPin — a hash, never
+    // the raw token, and select:false so a normal query never even risks
+    // leaking it. Cleared (both fields, back to null) once the reset succeeds.
+    passwordResetTokenHash: {
+      type: String,
+      default: null,
+      select: false,
+    },
+    passwordResetExpires: {
+      type: Date,
+      default: null,
+      select: false,
+    },
+    // Phase 12: opt-in weekly reading recap email — off by default, unlike
+    // notificationPrefs' in-app reminders, since email is a higher-commitment ask.
+    emailDigestOptIn: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

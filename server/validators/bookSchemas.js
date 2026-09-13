@@ -54,3 +54,44 @@ export const updateBookSchema = z.object({
   startDate: dateString,
   finishDate: dateString,
 });
+
+// Phase 13: one row of a bulk import. Deliberately more lenient than
+// createBookSchema — rows come from a client-side CSV/JSON parse (Goodreads
+// exports, or this app's own export) where numeric-looking fields can arrive
+// as strings, and an out-of-range rating shouldn't fail the whole batch.
+// Unknown keys (e.g. a re-imported export's `shelves`) are silently dropped
+// — Zod object schemas strip them by default — so a round-trip never errors.
+const importRating = z.preprocess(
+  (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
+  z.number().min(0).max(5).optional()
+);
+const importPageCount = z.preprocess(
+  (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
+  z.number().int().min(0).optional()
+);
+
+export const importRowSchema = z.object({
+  title: z.string({ required_error: 'Title is required' }).trim().min(1, 'Title is required'),
+  author: z.string({ required_error: 'Author is required' }).trim().min(1, 'Author is required'),
+  genre: z.string().trim().optional(),
+  status: statusEnum.optional(),
+  isbn: isbnSchema,
+  currentPage: importPageCount,
+  totalPages: importPageCount,
+  startDate: dateString,
+  finishDate: dateString,
+  rating: importRating,
+  isFavorite: z.boolean().optional(),
+  tags: z.array(z.string().trim()).optional(),
+  review: z.string().trim().optional(),
+});
+
+// Deliberately loose at the route level — each row is validated
+// individually inside importBooks instead, so one malformed row (a stray
+// date format, say) doesn't reject an otherwise-good 200-row batch outright.
+export const importBooksSchema = z.object({
+  rows: z
+    .array(z.record(z.unknown()))
+    .min(1, 'No rows to import')
+    .max(500, 'Import is capped at 500 rows at a time'),
+});

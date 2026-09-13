@@ -150,7 +150,7 @@ export const saveEntry = async (req, res) => {
   // req.body has already passed saveEntrySchema (trimmed, defaulted) via the
   // validate middleware in diaryRoutes.js. `date` is a URL param, not part of
   // the body, so it's still checked here.
-  const { title, content, mood, tags, linkedBook, gratitude } = req.body;
+  const { title, content, mood, tags, linkedBook, gratitude, images } = req.body;
   const { date } = req.params;
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -170,6 +170,7 @@ export const saveEntry = async (req, res) => {
           tags,
           linkedBook: linkedBook || null,
           gratitude,
+          images,
           wordCount,
         },
       },

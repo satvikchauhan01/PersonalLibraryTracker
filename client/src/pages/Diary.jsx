@@ -12,6 +12,7 @@ import {
   getDiaryToken,
 } from '../services/diaryService';
 import DiaryPinModal from '../components/DiaryPinModal';
+import { uploadDiaryImage } from '../services/uploadService'; // Phase 10
 import {
   Lock,
   Sparkles,
@@ -30,17 +31,60 @@ import {
   CheckCircle,
   PenLine,
   Loader2,
+  Plus,
 } from 'lucide-react';
 
 // ─── Mood Configuration ────────────────────────────────────────────────────
 const MOODS = [
-  { id: 'happy',      emoji: '😊', label: 'Joyful',     color: 'text-yellow-400',  bg: 'bg-yellow-400/20 border-yellow-400/40' },
-  { id: 'peaceful',   emoji: '😌', label: 'Peaceful',   color: 'text-teal-400',    bg: 'bg-teal-400/20 border-teal-400/40' },
-  { id: 'inspired',   emoji: '💡', label: 'Inspired',   color: 'text-purple-400',  bg: 'bg-purple-400/20 border-purple-400/40' },
-  { id: 'productive', emoji: '⚡', label: 'Productive', color: 'text-blue-400',    bg: 'bg-blue-400/20 border-blue-400/40' },
-  { id: 'neutral',    emoji: '😐', label: 'Neutral',    color: 'text-gray-400',    bg: 'bg-gray-400/20 border-gray-400/40' },
-  { id: 'stressed',   emoji: '😟', label: 'Stressed',   color: 'text-orange-400',  bg: 'bg-orange-400/20 border-orange-400/40' },
-  { id: 'sad',        emoji: '😔', label: 'Down',       color: 'text-indigo-400',  bg: 'bg-indigo-400/20 border-indigo-400/40' },
+  {
+    id: 'happy',
+    emoji: '😊',
+    label: 'Joyful',
+    color: 'text-yellow-400',
+    bg: 'bg-yellow-400/20 border-yellow-400/40',
+  },
+  {
+    id: 'peaceful',
+    emoji: '😌',
+    label: 'Peaceful',
+    color: 'text-teal-400',
+    bg: 'bg-teal-400/20 border-teal-400/40',
+  },
+  {
+    id: 'inspired',
+    emoji: '💡',
+    label: 'Inspired',
+    color: 'text-purple-400',
+    bg: 'bg-purple-400/20 border-purple-400/40',
+  },
+  {
+    id: 'productive',
+    emoji: '⚡',
+    label: 'Productive',
+    color: 'text-blue-400',
+    bg: 'bg-blue-400/20 border-blue-400/40',
+  },
+  {
+    id: 'neutral',
+    emoji: '😐',
+    label: 'Neutral',
+    color: 'text-gray-400',
+    bg: 'bg-gray-400/20 border-gray-400/40',
+  },
+  {
+    id: 'stressed',
+    emoji: '😟',
+    label: 'Stressed',
+    color: 'text-orange-400',
+    bg: 'bg-orange-400/20 border-orange-400/40',
+  },
+  {
+    id: 'sad',
+    emoji: '😔',
+    label: 'Down',
+    color: 'text-indigo-400',
+    bg: 'bg-indigo-400/20 border-indigo-400/40',
+  },
 ];
 
 const getMoodConfig = (id) => MOODS.find((m) => m.id === id) || MOODS[4];
@@ -53,7 +97,10 @@ const formatDisplayDate = (dateStr) => {
   const [y, m, d] = dateStr.split('-').map(Number);
   const date = new Date(y, m - 1, d);
   return date.toLocaleDateString('en-IN', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   });
 };
 const offsetDate = (dateStr, offset) => {
@@ -84,7 +131,15 @@ const Diary = () => {
   const [selectedDate, setSelectedDate] = useState(todayStr());
 
   // Entry state
-  const [entry, setEntry] = useState({ title: '', content: '', mood: 'neutral', tags: [], gratitude: ['', '', ''], linkedBook: null });
+  const [entry, setEntry] = useState({
+    title: '',
+    content: '',
+    mood: 'neutral',
+    tags: [],
+    gratitude: ['', '', ''],
+    linkedBook: null,
+    images: [],
+  });
   const [entryLoading, setEntryLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState('idle'); // 'idle'|'saving'|'saved'|'error'
 
@@ -153,10 +208,13 @@ const Diary = () => {
   const resetInactivityTimer = useCallback(() => {
     if (!lockEnabled) return;
     if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
-    inactivityTimerRef.current = setTimeout(() => {
-      handleLockNow();
-      showToast('Diary auto-locked due to inactivity.', 'info');
-    }, 10 * 60 * 1000);
+    inactivityTimerRef.current = setTimeout(
+      () => {
+        handleLockNow();
+        showToast('Diary auto-locked due to inactivity.', 'info');
+      },
+      10 * 60 * 1000
+    );
   }, [lockEnabled]);
 
   useEffect(() => {
@@ -187,8 +245,10 @@ const Diary = () => {
 
   const fetchBooks = async () => {
     try {
-      const { data } = await api.get('/books');
-      setBooks(data);
+      // Phase 06: /books now returns { books, page, ... } — this dropdown
+      // just needs the whole library, so ask for a generously high limit.
+      const { data } = await api.get('/books', { params: { limit: 200 } });
+      setBooks(data.books);
     } catch {}
   };
 
@@ -206,10 +266,19 @@ const Diary = () => {
           ? [...data.gratitude, '', '', ''].slice(0, 3)
           : ['', '', ''],
         linkedBook: data.linkedBook?._id || data.linkedBook || null,
+        images: data.images || [],
       });
     } catch (err) {
       if (err.response?.status === 404) {
-        setEntry({ title: '', content: '', mood: 'neutral', tags: [], gratitude: ['', '', ''], linkedBook: null });
+        setEntry({
+          title: '',
+          content: '',
+          mood: 'neutral',
+          tags: [],
+          gratitude: ['', '', ''],
+          linkedBook: null,
+          images: [],
+        });
       }
     } finally {
       setEntryLoading(false);
@@ -236,6 +305,7 @@ const Diary = () => {
         tags: entry.tags,
         gratitude: entry.gratitude.filter(Boolean),
         linkedBook: entry.linkedBook || null,
+        images: entry.images,
       });
       setSaveStatus('saved');
       fetchAllEntries();
@@ -311,7 +381,10 @@ const Diary = () => {
   };
 
   const handleRemoveTag = (tag) => {
-    updateField('tags', entry.tags.filter((t) => t !== tag));
+    updateField(
+      'tags',
+      entry.tags.filter((t) => t !== tag)
+    );
   };
 
   const handleGratitudeChange = (i, val) => {
@@ -320,12 +393,65 @@ const Diary = () => {
     updateField('gratitude', g);
   };
 
+  // ── Images (Phase 10) ───────────────────────────────────────────────────
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageError, setImageError] = useState('');
+  const MAX_DIARY_IMAGES = 4;
+  const MAX_IMAGE_MB = 3;
+
+  const handleAddImage = async (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    setImageError('');
+
+    if (!file.type.startsWith('image/')) {
+      setImageError('Please choose an image file.');
+      return;
+    }
+    if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
+      setImageError(`Image must be under ${MAX_IMAGE_MB}MB.`);
+      return;
+    }
+    if (entry.images.length >= MAX_DIARY_IMAGES) {
+      setImageError(`You can attach up to ${MAX_DIARY_IMAGES} images.`);
+      return;
+    }
+
+    setImageUploading(true);
+    try {
+      const url = await uploadDiaryImage(file);
+      updateField('images', [...entry.images, url]);
+      setTimeout(triggerSave, 100);
+    } catch (err) {
+      setImageError(err.response?.data?.message || 'Upload failed.');
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
+  const handleRemoveImage = (url) => {
+    updateField(
+      'images',
+      entry.images.filter((i) => i !== url)
+    );
+    setTimeout(triggerSave, 100);
+  };
+
   // ── Delete entry ────────────────────────────────────────────────────────
   const handleDelete = async () => {
     if (!window.confirm('Delete this diary entry? This cannot be undone.')) return;
     try {
       await deleteEntry(selectedDate);
-      setEntry({ title: '', content: '', mood: 'neutral', tags: [], gratitude: ['', '', ''], linkedBook: null });
+      setEntry({
+        title: '',
+        content: '',
+        mood: 'neutral',
+        tags: [],
+        gratitude: ['', '', ''],
+        linkedBook: null,
+        images: [],
+      });
       fetchAllEntries();
       fetchStats();
       showToast('Entry deleted.', 'info');
@@ -337,7 +463,9 @@ const Diary = () => {
   // ── Calendar helpers ────────────────────────────────────────────────────
   const entryDateSet = new Set(allEntries.map((e) => e.date));
   const entryMoodMap = {};
-  allEntries.forEach((e) => { entryMoodMap[e.date] = e.mood; });
+  allEntries.forEach((e) => {
+    entryMoodMap[e.date] = e.mood;
+  });
 
   const [calMonth, setCalMonth] = useState(() => {
     const d = new Date();
@@ -378,8 +506,8 @@ const Diary = () => {
             pinModal === 'unlock'
               ? handlePinSuccess
               : pinModal === 'setup'
-              ? handleSetupPinSuccess
-              : handleDisablePinSuccess
+                ? handleSetupPinSuccess
+                : handleDisablePinSuccess
           }
           onClose={pinModal === 'unlock' ? null : () => setPinModal(null)}
         />
@@ -387,10 +515,16 @@ const Diary = () => {
 
       {/* ── Toast ── */}
       {toast && (
-        <div className={`fixed top-4 right-4 z-40 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-sm font-medium transition-all
-          ${toast.type === 'success' ? 'bg-emerald-700 text-white' :
-            toast.type === 'error' ? 'bg-red-700 text-white' :
-            'bg-gray-700 text-gray-100'}`}>
+        <div
+          className={`fixed top-4 right-4 z-40 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-sm font-medium transition-all
+          ${
+            toast.type === 'success'
+              ? 'bg-emerald-700 text-white'
+              : toast.type === 'error'
+                ? 'bg-red-700 text-white'
+                : 'bg-gray-700 text-gray-100'
+          }`}
+        >
           {toast.type === 'success' && <CheckCircle size={16} />}
           {toast.type === 'error' && <AlertCircle size={16} />}
           {toast.message}
@@ -412,8 +546,16 @@ const Diary = () => {
         <div className="flex items-center gap-3">
           {/* Save status */}
           <div className="text-xs text-gray-400">
-            {saveStatus === 'saving' && <span className="flex items-center gap-1"><Loader2 size={12} className="animate-spin" /> Saving…</span>}
-            {saveStatus === 'saved' && <span className="flex items-center gap-1 text-emerald-400"><CheckCircle size={12} /> Saved</span>}
+            {saveStatus === 'saving' && (
+              <span className="flex items-center gap-1">
+                <Loader2 size={12} className="animate-spin" /> Saving…
+              </span>
+            )}
+            {saveStatus === 'saved' && (
+              <span className="flex items-center gap-1 text-emerald-400">
+                <CheckCircle size={12} /> Saved
+              </span>
+            )}
             {saveStatus === 'error' && <span className="text-red-400">Save failed</span>}
           </div>
 
@@ -447,10 +589,8 @@ const Diary = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
-
         {/* ── LEFT SIDEBAR ── */}
         <aside className="flex flex-col gap-4">
-
           {/* Stats Card */}
           {stats && (
             <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex flex-col gap-3">
@@ -469,7 +609,9 @@ const Diary = () => {
                   <div className="text-xs text-gray-500 mt-0.5">Entries</div>
                 </div>
                 <div className="bg-gray-800 rounded-xl p-3">
-                  <div className="text-teal-400 text-lg font-bold">{stats.totalWords.toLocaleString()}</div>
+                  <div className="text-teal-400 text-lg font-bold">
+                    {stats.totalWords.toLocaleString()}
+                  </div>
                   <div className="text-xs text-gray-500 mt-0.5">Words</div>
                 </div>
               </div>
@@ -477,7 +619,10 @@ const Diary = () => {
               {stats.moodCounts && Object.keys(stats.moodCounts).length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-1">
                   {MOODS.filter((m) => stats.moodCounts[m.id]).map((m) => (
-                    <span key={m.id} className={`text-xs px-2 py-0.5 rounded-full border ${m.bg} ${m.color}`}>
+                    <span
+                      key={m.id}
+                      className={`text-xs px-2 py-0.5 rounded-full border ${m.bg} ${m.color}`}
+                    >
                       {m.emoji} {stats.moodCounts[m.id]}
                     </span>
                   ))}
@@ -492,7 +637,9 @@ const Diary = () => {
               <FileText size={16} className="text-purple-400" /> Recent Entries
             </h3>
             {allEntries.length === 0 ? (
-              <p className="text-xs text-gray-500 text-center py-4">No entries yet. Start writing!</p>
+              <p className="text-xs text-gray-500 text-center py-4">
+                No entries yet. Start writing!
+              </p>
             ) : (
               allEntries.slice(0, 20).map((e) => {
                 const m = getMoodConfig(e.mood);
@@ -505,8 +652,12 @@ const Diary = () => {
                   >
                     <span className="text-base">{m.emoji}</span>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-200 truncate">{e.title || 'Untitled Entry'}</div>
-                      <div className="text-gray-500">{e.date} · {e.wordCount} words</div>
+                      <div className="font-medium text-gray-200 truncate">
+                        {e.title || 'Untitled Entry'}
+                      </div>
+                      <div className="text-gray-500">
+                        {e.date} · {e.wordCount} words
+                      </div>
                     </div>
                   </button>
                 );
@@ -517,54 +668,84 @@ const Diary = () => {
           {/* Mini Calendar */}
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
             <div className="flex items-center justify-between mb-3">
-              <button onClick={() => setCalMonth((p) => {
-                const d = new Date(p.year, p.month - 1);
-                return { year: d.getFullYear(), month: d.getMonth() };
-              })} className="p-1 hover:bg-gray-700 rounded-lg text-gray-400"><ChevronLeft size={16} /></button>
+              <button
+                onClick={() =>
+                  setCalMonth((p) => {
+                    const d = new Date(p.year, p.month - 1);
+                    return { year: d.getFullYear(), month: d.getMonth() };
+                  })
+                }
+                className="p-1 hover:bg-gray-700 rounded-lg text-gray-400"
+              >
+                <ChevronLeft size={16} />
+              </button>
               <span className="text-sm font-semibold text-gray-200">
-                {new Date(calMonth.year, calMonth.month).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
+                {new Date(calMonth.year, calMonth.month).toLocaleDateString('en-IN', {
+                  month: 'long',
+                  year: 'numeric',
+                })}
               </span>
-              <button onClick={() => setCalMonth((p) => {
-                const d = new Date(p.year, p.month + 1);
-                return { year: d.getFullYear(), month: d.getMonth() };
-              })} className="p-1 hover:bg-gray-700 rounded-lg text-gray-400"><ChevronRight size={16} /></button>
+              <button
+                onClick={() =>
+                  setCalMonth((p) => {
+                    const d = new Date(p.year, p.month + 1);
+                    return { year: d.getFullYear(), month: d.getMonth() };
+                  })
+                }
+                className="p-1 hover:bg-gray-700 rounded-lg text-gray-400"
+              >
+                <ChevronRight size={16} />
+              </button>
             </div>
             <div className="grid grid-cols-7 gap-0.5 text-center text-xs text-gray-500 mb-1">
-              {['Su','Mo','Tu','We','Th','Fr','Sa'].map((d) => <div key={d}>{d}</div>)}
+              {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+                <div key={d}>{d}</div>
+              ))}
             </div>
             <div className="grid grid-cols-7 gap-0.5">
-              {Array(firstDay).fill(null).map((_, i) => <div key={'e'+i} />)}
-              {Array(daysInMonth).fill(null).map((_, i) => {
-                const day = i + 1;
-                const ds = `${calMonth.year}-${String(calMonth.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const hasEntry = entryDateSet.has(ds);
-                const mood = entryMoodMap[ds];
-                const moodCfg = mood ? getMoodConfig(mood) : null;
-                const isSelected = ds === selectedDate;
-                const isToday = ds === todayStr();
-                return (
-                  <button
-                    key={ds}
-                    onClick={() => setSelectedDate(ds)}
-                    className={`aspect-square rounded-lg text-xs flex flex-col items-center justify-center relative transition-all
-                      ${isSelected ? 'bg-indigo-600 text-white font-bold' :
-                        isToday ? 'border border-indigo-500 text-indigo-400' :
-                        'hover:bg-gray-800 text-gray-400'}`}
-                  >
-                    {day}
-                    {hasEntry && !isSelected && (
-                      <span className={`absolute bottom-0.5 w-1 h-1 rounded-full ${moodCfg?.color.replace('text-', 'bg-') || 'bg-indigo-400'}`} />
-                    )}
-                  </button>
-                );
-              })}
+              {Array(firstDay)
+                .fill(null)
+                .map((_, i) => (
+                  <div key={'e' + i} />
+                ))}
+              {Array(daysInMonth)
+                .fill(null)
+                .map((_, i) => {
+                  const day = i + 1;
+                  const ds = `${calMonth.year}-${String(calMonth.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                  const hasEntry = entryDateSet.has(ds);
+                  const mood = entryMoodMap[ds];
+                  const moodCfg = mood ? getMoodConfig(mood) : null;
+                  const isSelected = ds === selectedDate;
+                  const isToday = ds === todayStr();
+                  return (
+                    <button
+                      key={ds}
+                      onClick={() => setSelectedDate(ds)}
+                      className={`aspect-square rounded-lg text-xs flex flex-col items-center justify-center relative transition-all
+                      ${
+                        isSelected
+                          ? 'bg-indigo-600 text-white font-bold'
+                          : isToday
+                            ? 'border border-indigo-500 text-indigo-400'
+                            : 'hover:bg-gray-800 text-gray-400'
+                      }`}
+                    >
+                      {day}
+                      {hasEntry && !isSelected && (
+                        <span
+                          className={`absolute bottom-0.5 w-1 h-1 rounded-full ${moodCfg?.color.replace('text-', 'bg-') || 'bg-indigo-400'}`}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
             </div>
           </div>
         </aside>
 
         {/* ── MAIN EDITOR AREA ── */}
         <main className="flex flex-col gap-4">
-
           {/* Date Navigation Bar */}
           <div className="bg-gray-900 border border-gray-800 rounded-2xl px-5 py-4 flex items-center justify-between">
             <button
@@ -609,7 +790,12 @@ const Diary = () => {
                     <p className="text-sm font-medium text-purple-200">Daily Spark ✨</p>
                     <p className="text-sm text-gray-300 mt-0.5 italic">"{aiPrompt}"</p>
                   </div>
-                  <button onClick={() => setAiPrompt('')} className="text-gray-500 hover:text-gray-300 text-xs mt-0.5">✕</button>
+                  <button
+                    onClick={() => setAiPrompt('')}
+                    className="text-gray-500 hover:text-gray-300 text-xs mt-0.5"
+                  >
+                    ✕
+                  </button>
                 </div>
               )}
 
@@ -622,7 +808,10 @@ const Diary = () => {
                     {MOODS.map((m) => (
                       <button
                         key={m.id}
-                        onClick={() => { updateField('mood', m.id); setTimeout(triggerSave, 100); }}
+                        onClick={() => {
+                          updateField('mood', m.id);
+                          setTimeout(triggerSave, 100);
+                        }}
                         title={m.label}
                         className={`text-xl px-2 py-1 rounded-lg border transition-all duration-150
                           ${entry.mood === m.id ? m.bg + ' scale-110' : 'border-transparent hover:bg-gray-800'}`}
@@ -630,7 +819,9 @@ const Diary = () => {
                         {m.emoji}
                       </button>
                     ))}
-                    <span className={`text-xs ml-1 ${selectedMood.color}`}>{selectedMood.label}</span>
+                    <span className={`text-xs ml-1 ${selectedMood.color}`}>
+                      {selectedMood.label}
+                    </span>
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -643,7 +834,11 @@ const Diary = () => {
                       disabled={promptLoading}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-700/30 border border-purple-600/40 text-purple-300 text-xs rounded-lg hover:bg-purple-700/40 transition-colors disabled:opacity-50"
                     >
-                      {promptLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                      {promptLoading ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <Sparkles size={12} />
+                      )}
                       Daily Spark
                     </button>
 
@@ -688,7 +883,6 @@ const Diary = () => {
 
               {/* Bottom Section: Gratitude + Tags + Book Link */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
                 {/* Gratitude / Highlights */}
                 <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex flex-col gap-3">
                   <h3 className="text-sm font-semibold text-gray-300 flex items-center gap-2">
@@ -722,13 +916,20 @@ const Diary = () => {
                         placeholder="Add a tag…"
                         value={tagInput}
                         onChange={(e) => setTagInput(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag(); } }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddTag();
+                          }
+                        }}
                         className="flex-1 bg-gray-800 border border-gray-700 text-gray-200 placeholder-gray-600 text-sm rounded-lg px-3 py-2 outline-none focus:border-indigo-500 transition-colors"
                       />
                       <button
                         onClick={handleAddTag}
                         className="px-3 py-2 bg-teal-700/30 border border-teal-600/40 text-teal-300 text-xs rounded-lg hover:bg-teal-700/40 transition-colors"
-                      >Add</button>
+                      >
+                        Add
+                      </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {entry.tags.map((tag) => (
@@ -737,7 +938,12 @@ const Diary = () => {
                           className="flex items-center gap-1 text-xs bg-teal-900/40 border border-teal-700/40 text-teal-300 px-2.5 py-1 rounded-full"
                         >
                           #{tag}
-                          <button onClick={() => handleRemoveTag(tag)} className="hover:text-red-400 transition-colors">✕</button>
+                          <button
+                            onClick={() => handleRemoveTag(tag)}
+                            className="hover:text-red-400 transition-colors"
+                          >
+                            ✕
+                          </button>
                         </span>
                       ))}
                     </div>
@@ -750,7 +956,10 @@ const Diary = () => {
                     </h3>
                     <select
                       value={entry.linkedBook || ''}
-                      onChange={(e) => { updateField('linkedBook', e.target.value || null); setTimeout(triggerSave, 100); }}
+                      onChange={(e) => {
+                        updateField('linkedBook', e.target.value || null);
+                        setTimeout(triggerSave, 100);
+                      }}
                       className="w-full bg-gray-800 border border-gray-700 text-gray-300 text-sm rounded-lg px-3 py-2 outline-none focus:border-indigo-500 transition-colors"
                     >
                       <option value="">— No book linked —</option>
@@ -761,8 +970,59 @@ const Diary = () => {
                       ))}
                     </select>
                     {entry.linkedBook && (
-                      <p className="text-xs text-orange-300">📖 Reflecting on a book from your library</p>
+                      <p className="text-xs text-orange-300">
+                        📖 Reflecting on a book from your library
+                      </p>
                     )}
+                  </div>
+
+                  {/* Phase 10: Image attachments */}
+                  <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex flex-col gap-3">
+                    <h3 className="text-sm font-semibold text-gray-300 flex items-center justify-between">
+                      <span>📷 Images</span>
+                      <span className="text-xs font-normal text-gray-500">
+                        {entry.images.length}/{MAX_DIARY_IMAGES}
+                      </span>
+                    </h3>
+                    <div className="flex flex-wrap gap-3">
+                      {entry.images.map((url) => (
+                        <div key={url} className="relative group w-20 h-20 flex-shrink-0">
+                          <img
+                            src={url}
+                            alt=""
+                            className="w-full h-full object-cover rounded-lg border border-gray-700"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(url)}
+                            className="absolute -top-1.5 -right-1.5 bg-gray-900 border border-gray-700 rounded-full w-4 h-4 flex items-center justify-center text-gray-400 hover:text-red-400 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Remove image"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                      {entry.images.length < MAX_DIARY_IMAGES && (
+                        <label className="w-20 h-20 flex-shrink-0 flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-700 text-gray-500 hover:border-indigo-500 hover:text-indigo-400 cursor-pointer transition-colors">
+                          {imageUploading ? (
+                            <Loader2 size={18} className="animate-spin" />
+                          ) : (
+                            <>
+                              <Plus size={16} />
+                              <span className="text-[10px] mt-1">Add</span>
+                            </>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleAddImage}
+                            disabled={imageUploading}
+                          />
+                        </label>
+                      )}
+                    </div>
+                    {imageError && <p className="text-xs text-red-400">{imageError}</p>}
                   </div>
                 </div>
               </div>

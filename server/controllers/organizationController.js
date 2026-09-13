@@ -1,6 +1,7 @@
 import Book from '../models/Book.js';
 import Review from '../models/Review.js';
 import Note from '../models/Note.js';
+import { logActivity } from './activityController.js'; // Phase 08
 
 // Shared ownership check — returns the book or null after already responding.
 const loadOwnedBook = async (req, res) => {
@@ -31,6 +32,11 @@ export const setRating = async (req, res) => {
     book.rating = req.body.rating;
     await book.save();
     res.json({ _id: book._id, rating: book.rating });
+
+    // Phase 08: only a real rating is feed-worthy, not clearing one back to null
+    if (book.rating !== null) {
+      logActivity(req.user._id, 'book_rated', book, { rating: book.rating });
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

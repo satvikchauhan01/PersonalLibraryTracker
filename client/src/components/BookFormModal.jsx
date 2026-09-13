@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, Search, Loader, Hash, AlertCircle, CheckCircle2 } from 'lucide-react';
 import api from '../services/api';
 import { lookupIsbn } from '../services/isbnService';
+import ImageUploadField from './ImageUploadField';
+import { uploadBookCover } from '../services/uploadService';
 
 // Which lookup mode is active in the add-book search section
 const LOOKUP_TABS = [
@@ -193,22 +195,22 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg p-6">
-        <h3 className="text-2xl font-bold text-gray-900 mb-6">
+      <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg p-6">
+        <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
           {editingBook ? 'Edit Book Details' : 'Add New Book'}
         </h3>
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 transition duration-150"
+          className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition duration-150"
         >
           <X size={24} />
         </button>
 
         {/* ── Lookup Section (add mode only) ────────────────────────────── */}
         {!editingBook && (
-          <div className="mb-6 pb-4 border-b">
+          <div className="mb-6 pb-4 border-b dark:border-gray-800">
             {/* Tab switcher */}
-            <div className="flex space-x-1 mb-4 bg-gray-100 rounded-lg p-1">
+            <div className="flex space-x-1 mb-4 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
               {LOOKUP_TABS.map((tab) => (
                 <button
                   key={tab.id}
@@ -221,8 +223,8 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
                   }}
                   className={`flex-1 py-1.5 px-3 text-sm font-medium rounded-md transition duration-150 ${
                     activeTab === tab.id
-                      ? 'bg-white text-indigo-700 shadow'
-                      : 'text-gray-500 hover:text-gray-700'
+                      ? 'bg-white dark:bg-gray-700 text-indigo-700 dark:text-indigo-300 shadow'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                   }`}
                 >
                   {tab.label}
@@ -235,7 +237,7 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
               <div>
                 <label
                   htmlFor="isbnLookup"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Enter ISBN-10 or ISBN-13
                 </label>
@@ -256,7 +258,7 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
                       }}
                       onKeyDown={handleIsbnKeyDown}
                       placeholder="e.g. 9780743273565"
-                      className="w-full pl-9 pr-4 py-2.5 rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                      className="w-full pl-9 pr-4 py-2.5 rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                     />
                   </div>
                   <button
@@ -290,7 +292,7 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
               <div>
                 <label
                   htmlFor="bookSearch"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Search for Book (Google Books API)
                 </label>
@@ -301,7 +303,7 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search by title or author..."
-                    className="flex-grow rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border text-sm"
+                    className="flex-grow rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border text-sm"
                   />
                   <button
                     type="button"
@@ -317,15 +319,19 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
                   </button>
                 </div>
                 {searchResults.length > 0 && (
-                  <div className="mt-3 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-2 bg-gray-50">
+                  <div className="mt-3 max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2 bg-gray-50 dark:bg-gray-800">
                     {searchResults.map((book) => (
                       <div
                         key={book.id}
                         onClick={() => handleSelectBook(book)}
-                        className="p-2 border-b last:border-b-0 hover:bg-indigo-50 cursor-pointer rounded-md transition duration-150"
+                        className="p-2 border-b dark:border-gray-700 last:border-b-0 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 cursor-pointer rounded-md transition duration-150"
                       >
-                        <p className="text-sm font-semibold text-gray-800">{book.title}</p>
-                        <p className="text-xs text-gray-500 italic">by {book.author}</p>
+                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                          {book.title}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                          by {book.author}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -337,7 +343,7 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
 
         {/* ── Conflict / Submit Error ────────────────────────────────────── */}
         {submitError && (
-          <div className="mb-4 flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+          <div className="mb-4 flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 p-3 text-sm text-red-700 dark:text-red-400">
             <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
             <span>{submitError}</span>
           </div>
@@ -346,7 +352,10 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
         {/* ── Book Form ─────────────────────────────────────────────────── */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="title"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
               Title <span className="text-red-500">*</span>
             </label>
             <input
@@ -356,11 +365,14 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
               value={formState.title}
               onChange={handleInputChange}
               required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
             />
           </div>
           <div>
-            <label htmlFor="author" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="author"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
               Author <span className="text-red-500">*</span>
             </label>
             <input
@@ -370,11 +382,14 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
               value={formState.author}
               onChange={handleInputChange}
               required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
             />
           </div>
           <div>
-            <label htmlFor="genre" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="genre"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
               Genre
             </label>
             <input
@@ -383,13 +398,16 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
               id="genre"
               value={formState.genre}
               onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
             />
           </div>
 
           {/* Phase 03: ISBN field (pre-filled from lookup, or manual entry) */}
           <div>
-            <label htmlFor="isbn" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="isbn"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
               ISBN <span className="text-xs font-normal text-gray-400">(optional)</span>
             </label>
             <input
@@ -399,25 +417,43 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
               value={formState.isbn}
               onChange={handleInputChange}
               placeholder="e.g. 9780743273565"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border font-mono text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border font-mono text-sm"
             />
           </div>
 
           <div>
-            <label htmlFor="coverUrl" className="block text-sm font-medium text-gray-700">
-              Cover Image URL
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Cover Image
             </label>
-            <input
-              type="url"
-              name="coverUrl"
-              id="coverUrl"
-              value={formState.coverUrl}
-              onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
-            />
+            <div className="flex items-start gap-4">
+              <ImageUploadField
+                currentUrl={formState.coverUrl}
+                uploadFn={uploadBookCover}
+                maxSizeMB={3}
+                shape="square"
+                size={72}
+                onUploaded={(url) => setFormState((prev) => ({ ...prev, coverUrl: url }))}
+              />
+              <div className="flex-grow">
+                <label htmlFor="coverUrl" className="block text-xs text-gray-400 mb-1">
+                  or paste an image URL
+                </label>
+                <input
+                  type="url"
+                  name="coverUrl"
+                  id="coverUrl"
+                  value={formState.coverUrl}
+                  onChange={handleInputChange}
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm border"
+                />
+              </div>
+            </div>
           </div>
           <div>
-            <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="status"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
               Status
             </label>
             <select
@@ -425,7 +461,7 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
               id="status"
               value={formState.status}
               onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border bg-white"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
             >
               <option value="wantToRead">Want to Read</option>
               <option value="reading">Reading</option>
@@ -438,7 +474,10 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
           {/* Phase 04: Page tracking fields */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="totalPages" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="totalPages"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
                 Total Pages <span className="text-xs font-normal text-gray-400">(optional)</span>
               </label>
               <input
@@ -449,11 +488,14 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
                 onChange={handleInputChange}
                 min="0"
                 placeholder="e.g. 320"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
               />
             </div>
             <div>
-              <label htmlFor="currentPage" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="currentPage"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
                 Current Page <span className="text-xs font-normal text-gray-400">(optional)</span>
               </label>
               <input
@@ -464,7 +506,7 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
                 onChange={handleInputChange}
                 min="0"
                 placeholder="e.g. 0"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
               />
             </div>
           </div>
@@ -473,7 +515,7 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition duration-150"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition duration-150"
             >
               Cancel
             </button>

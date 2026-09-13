@@ -37,7 +37,7 @@ const BookCard = ({
     : 0;
 
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col md:flex-row transform transition duration-300 hover:shadow-xl">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col md:flex-row transform transition duration-300 hover:shadow-xl">
       <div className="relative w-full md:w-32 h-48 md:h-auto flex-shrink-0">
         <img
           src={book.coverUrl}
@@ -51,7 +51,7 @@ const BookCard = ({
         {/* Phase 05: Favorite toggle */}
         <button
           onClick={() => onToggleFavorite(book)}
-          className="absolute top-2 right-2 p-1.5 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
+          className="absolute top-2 right-2 p-1.5 rounded-full bg-white/80 dark:bg-gray-900/80 hover:bg-white dark:hover:bg-gray-900 shadow-sm transition-colors"
           title={book.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
         >
           <Heart
@@ -62,8 +62,10 @@ const BookCard = ({
       </div>
       <div className="p-4 flex flex-col justify-between flex-grow">
         <div>
-          <h3 className="text-xl font-bold text-gray-800 line-clamp-2">{book.title}</h3>
-          <p className="text-sm text-gray-500 italic">by {book.author}</p>
+          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 line-clamp-2">
+            {book.title}
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 italic">by {book.author}</p>
           <p className="text-xs text-gray-400 mb-2">Genre: {book.genre || 'N/A'}</p>
           <div className="flex items-center flex-wrap gap-2 mb-1">
             <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusDisplay.color}`}>
@@ -90,13 +92,15 @@ const BookCard = ({
           {/* Phase 04: Progress bar */}
           {hasProgress && (
             <div className="mt-3">
-              <div className="flex justify-between text-xs text-gray-500 mb-1">
+              <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
                 <span>
                   {book.currentPage} / {book.totalPages} pages
                 </span>
-                <span className="font-semibold text-indigo-600">{progressPct}%</span>
+                <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                  {progressPct}%
+                </span>
               </div>
-              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${
                     progressPct >= 100

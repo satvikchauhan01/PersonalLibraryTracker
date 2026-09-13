@@ -5,6 +5,10 @@ import Library from './pages/Library';
 import Profile from './pages/Profile';
 import Diary from './pages/Diary';
 import Shelves from './pages/Shelves';
+import Dashboard from './pages/Dashboard';
+import Friends from './pages/Friends';
+import Billing from './pages/Billing';
+import ResetPassword from './pages/ResetPassword'; // Phase 12
 import AuthScreen from './components/AuthScreen';
 import Navbar from './components/Navbar';
 import { Loader } from 'lucide-react';
@@ -14,14 +18,14 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <Loader size={32} className="animate-spin text-indigo-600" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 font-sans transition-colors">
       {user ? (
         <>
           <Navbar />
@@ -29,6 +33,9 @@ function App() {
             <Routes>
               <Route path="/" element={<Library />} />
               <Route path="/shelves" element={<Shelves />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/friends" element={<Friends />} />
+              <Route path="/billing" element={<Billing />} />
               <Route path="/diary" element={<Diary />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="*" element={<Navigate to="/" />} />
@@ -38,6 +45,7 @@ function App() {
       ) : (
         <Routes>
           <Route path="/auth" element={<AuthScreen />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="*" element={<Navigate to="/auth" />} />
         </Routes>
       )}

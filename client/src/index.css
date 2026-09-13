@@ -9,3 +9,9 @@ body {
   font-family: 'Inter', sans-serif;
 }
 
+/* Phase 13: dark mode — ThemeContext toggles the `dark` class on <html>;
+   this covers the bit of body Tailwind's dark: variants don't reach. */
+.dark body {
+  background-color: #111827; /* gray-900 */
+}
+

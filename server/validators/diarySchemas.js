@@ -33,4 +33,6 @@ export const saveEntrySchema = z.object({
     .max(3, 'Maximum 3 gratitude bullets allowed')
     .optional()
     .default([]),
+  // Phase 10: Cloudinary URLs, attached via the image-upload flow
+  images: z.array(z.string()).max(4, 'Maximum 4 images allowed').optional().default([]),
 });

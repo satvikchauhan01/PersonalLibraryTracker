@@ -134,7 +134,7 @@ const BookDetailModal = ({ book, onClose, onUpdated }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 flex justify-between items-start flex-shrink-0">
           <div className="min-w-0">
@@ -147,15 +147,15 @@ const BookDetailModal = ({ book, onClose, onUpdated }) => {
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 flex-shrink-0">
+        <div className="flex border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? 'text-indigo-600 border-b-2 border-indigo-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
             >
               <tab.icon size={15} />
@@ -173,7 +173,7 @@ const BookDetailModal = ({ book, onClose, onUpdated }) => {
                 onChange={(e) => setReviewText(e.target.value)}
                 rows={8}
                 placeholder="What did you think of this book?"
-                className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+                className="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 rounded-xl px-4 py-2.5 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
               />
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-400">{reviewStatus}</span>
@@ -198,7 +198,7 @@ const BookDetailModal = ({ book, onClose, onUpdated }) => {
                 onChange={(e) => setNoteText(e.target.value)}
                 rows={8}
                 placeholder="Page references, half-formed thoughts, anything..."
-                className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+                className="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 rounded-xl px-4 py-2.5 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
               />
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-400">{noteStatus}</span>
@@ -221,7 +221,7 @@ const BookDetailModal = ({ book, onClose, onUpdated }) => {
                   value={newQuoteText}
                   onChange={(e) => setNewQuoteText(e.target.value)}
                   placeholder="Add a quote or highlight..."
-                  className="flex-grow border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  className="flex-grow border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                 />
                 <input
                   type="number"
@@ -229,7 +229,7 @@ const BookDetailModal = ({ book, onClose, onUpdated }) => {
                   value={newQuotePage}
                   onChange={(e) => setNewQuotePage(e.target.value)}
                   placeholder="p."
-                  className="w-16 border border-gray-300 rounded-xl px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  className="w-16 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-xl px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                 />
                 <button
                   type="submit"
@@ -249,10 +249,12 @@ const BookDetailModal = ({ book, onClose, onUpdated }) => {
                   {quotes.map((q) => (
                     <li
                       key={q._id}
-                      className="flex items-start justify-between gap-3 bg-gray-50 rounded-xl p-3"
+                      className="flex items-start justify-between gap-3 bg-gray-50 dark:bg-gray-800 rounded-xl p-3"
                     >
                       <div>
-                        <p className="text-sm text-gray-800 italic">&ldquo;{q.text}&rdquo;</p>
+                        <p className="text-sm text-gray-800 dark:text-gray-200 italic">
+                          &ldquo;{q.text}&rdquo;
+                        </p>
                         {q.page && <p className="text-xs text-gray-400 mt-1">page {q.page}</p>}
                       </div>
                       <button
@@ -277,7 +279,7 @@ const BookDetailModal = ({ book, onClose, onUpdated }) => {
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
                   placeholder="Add a tag..."
-                  className="flex-grow border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  className="flex-grow border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                 />
                 <button
                   type="submit"

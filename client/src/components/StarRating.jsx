@@ -46,7 +46,7 @@ const StarRating = ({ value = 0, onChange, size = 20 }) => {
             className="relative inline-block pointer-events-none"
             style={{ width: size, height: size }}
           >
-            <Star size={size} className="absolute inset-0 text-gray-300" />
+            <Star size={size} className="absolute inset-0 text-gray-300 dark:text-gray-600" />
             <span className="absolute inset-0 overflow-hidden" style={{ width: `${fillPct}%` }}>
               <Star size={size} className="text-amber-400 fill-amber-400" />
             </span>

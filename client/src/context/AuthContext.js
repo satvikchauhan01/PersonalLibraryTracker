@@ -62,6 +62,31 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Phase 11: patch one or more notification-preference toggles.
+  const updateNotificationPrefs = async (prefs) => {
+    try {
+      const { data } = await api.patch('/auth/notification-prefs', prefs);
+      setUser((prev) => ({ ...prev, ...data }));
+      return data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Update failed');
+    }
+  };
+
+  // Phase 09: re-pull the current user (e.g. after a payment webhook/verify
+  // flips isPro) without the semantic mismatch of routing it through
+  // updateUser's "save a profile edit" endpoint.
+  const refreshUser = async () => {
+    try {
+      const { data } = await api.get('/auth/me');
+      setUser(data);
+      return data;
+    } catch (error) {
+      console.error('Error refreshing user:', error);
+      return null;
+    }
+  };
+
   const logout = async () => {
     try {
       await api.post('/auth/logout');
@@ -73,7 +98,18 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, updateUser, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        register,
+        updateUser,
+        updateNotificationPrefs,
+        refreshUser,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

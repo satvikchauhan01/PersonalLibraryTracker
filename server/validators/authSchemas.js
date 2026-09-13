@@ -39,4 +39,30 @@ export const updateProfileSchema = z.object({
   bio: z.string().max(280, 'Bio must be at most 280 characters').optional(),
   favoriteGenre: z.string().trim().optional(),
   avatarUrl: z.string().trim().optional(),
+  emailDigestOptIn: z.boolean().optional(), // Phase 12
+});
+
+// Phase 11: every field optional — the client only sends the toggle(s) that
+// actually changed, and unset fields keep their current DB value (merged in
+// authController.updateNotificationPrefs, not replaced wholesale).
+export const notificationPrefsSchema = z.object({
+  readingReminders: z.boolean().optional(),
+  goalReminders: z.boolean().optional(),
+  continueReadingNudges: z.boolean().optional(),
+  streakAlerts: z.boolean().optional(),
+});
+
+// Phase 12
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string({ required_error: 'Email is required' })
+    .trim()
+    .toLowerCase()
+    .email('Please enter a valid email address'),
+});
+
+export const resetPasswordSchema = z.object({
+  password: z
+    .string({ required_error: 'Password is required' })
+    .min(6, 'Password must be at least 6 characters'),
 });

@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
 import AuthContext from '../context/AuthContext';
+import api from '../services/api';
 import {
   BookOpen,
   AlertTriangle,
@@ -15,12 +16,25 @@ import {
   Eye,
   EyeOff,
   CheckCircle,
+  MailCheck,
 } from 'lucide-react';
 
 const GENRE_OPTIONS = [
-  'Fiction', 'Non-Fiction', 'Science Fiction', 'Fantasy', 'Mystery',
-  'Thriller', 'Romance', 'Biography', 'Self-Help', 'History',
-  'Science', 'Technology', 'Philosophy', 'Poetry', 'Comics & Manga',
+  'Fiction',
+  'Non-Fiction',
+  'Science Fiction',
+  'Fantasy',
+  'Mystery',
+  'Thriller',
+  'Romance',
+  'Biography',
+  'Self-Help',
+  'History',
+  'Science',
+  'Technology',
+  'Philosophy',
+  'Poetry',
+  'Comics & Manga',
 ];
 
 const AuthScreen = () => {
@@ -43,6 +57,12 @@ const AuthScreen = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Phase 12: forgot-password — a third mode, reachable only from the login view
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSent, setForgotSent] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
+
   const { login, register } = useContext(AuthContext);
 
   const resetForm = () => {
@@ -56,6 +76,23 @@ const AuthScreen = () => {
     setStep(1);
     setError(null);
     setShowPassword(false);
+    setShowForgotPassword(false);
+    setForgotEmail('');
+    setForgotSent(false);
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setError(null);
+    try {
+      await api.post('/auth/forgot-password', { email: forgotEmail.trim() });
+      setForgotSent(true);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Something went wrong. Please try again.');
+    } finally {
+      setForgotLoading(false);
+    }
   };
 
   // Validate step 1 before proceeding
@@ -126,11 +163,11 @@ const AuthScreen = () => {
 
   // Shared input styling
   const inputClass =
-    'mt-1 block w-full rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 p-3 text-gray-900 placeholder-gray-400 transition-all duration-200';
+    'mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-800 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 p-3 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-200';
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 p-4">
+      <div className="max-w-md w-full bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-6 text-center">
           <div className="flex justify-center mb-3">
@@ -139,28 +176,46 @@ const AuthScreen = () => {
             </div>
           </div>
           <h2 className="text-2xl font-bold text-white">
-            {isLogin ? 'Welcome Back!' : step === 1 ? 'Create Your Account' : 'Almost There!'}
+            {isLogin
+              ? showForgotPassword
+                ? 'Reset Password'
+                : 'Welcome Back!'
+              : step === 1
+                ? 'Create Your Account'
+                : 'Almost There!'}
           </h2>
           <p className="text-indigo-100 text-sm mt-1">
             {isLogin
-              ? 'Sign in to access your library & diary.'
+              ? showForgotPassword
+                ? "Enter your email and we'll send you a reset link."
+                : 'Sign in to access your library & diary.'
               : step === 1
-              ? 'Fill in the required details to get started.'
-              : 'Add a few optional details about yourself.'}
+                ? 'Fill in the required details to get started.'
+                : 'Add a few optional details about yourself.'}
           </p>
 
           {/* Step indicator for registration */}
           {!isLogin && (
             <div className="flex items-center justify-center gap-2 mt-4">
-              <div className={`flex items-center gap-1.5 text-xs font-medium ${step === 1 ? 'text-white' : 'text-indigo-200'}`}>
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === 1 ? 'bg-white text-indigo-600' : 'bg-white/30 text-white'}`}>
+              <div
+                className={`flex items-center gap-1.5 text-xs font-medium ${step === 1 ? 'text-white' : 'text-indigo-200'}`}
+              >
+                <span
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === 1 ? 'bg-white text-indigo-600' : 'bg-white/30 text-white'}`}
+                >
                   {step > 1 ? <CheckCircle size={14} /> : '1'}
                 </span>
                 Required
               </div>
               <div className="w-8 h-px bg-indigo-300" />
-              <div className={`flex items-center gap-1.5 text-xs font-medium ${step === 2 ? 'text-white' : 'text-indigo-300'}`}>
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === 2 ? 'bg-white text-indigo-600' : 'bg-white/20 text-indigo-200'}`}>2</span>
+              <div
+                className={`flex items-center gap-1.5 text-xs font-medium ${step === 2 ? 'text-white' : 'text-indigo-300'}`}
+              >
+                <span
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === 2 ? 'bg-white text-indigo-600' : 'bg-white/20 text-indigo-200'}`}
+                >
+                  2
+                </span>
                 Optional
               </div>
             </div>
@@ -170,17 +225,20 @@ const AuthScreen = () => {
         {/* Body */}
         <div className="px-8 py-6">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-5 flex items-center">
+            <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl mb-5 flex items-center">
               <AlertTriangle size={18} className="mr-2 flex-shrink-0" />
               <span className="text-sm">{error}</span>
             </div>
           )}
 
           {/* ─── LOGIN FORM ─── */}
-          {isLogin && (
+          {isLogin && !showForgotPassword && (
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                <label
+                  htmlFor="login-email"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
+                >
                   <Mail size={14} className="text-gray-400" /> Email address
                 </label>
                 <input
@@ -195,9 +253,24 @@ const AuthScreen = () => {
                 />
               </div>
               <div>
-                <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                  <Lock size={14} className="text-gray-400" /> Password
-                </label>
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="login-password"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
+                  >
+                    <Lock size={14} className="text-gray-400" /> Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowForgotPassword(true);
+                      setError(null);
+                    }}
+                    className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
                 <div className="relative">
                   <input
                     id="login-password"
@@ -229,12 +302,75 @@ const AuthScreen = () => {
             </form>
           )}
 
+          {/* ─── FORGOT PASSWORD ─── */}
+          {isLogin && showForgotPassword && (
+            <div className="space-y-5">
+              {forgotSent ? (
+                <div className="text-center py-4">
+                  <MailCheck size={36} className="text-emerald-500 mx-auto mb-3" />
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    If <strong>{forgotEmail}</strong> is registered, a reset link is on its way.
+                    Check your inbox — the link expires in 30 minutes.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleForgotPassword} className="space-y-5">
+                  <div>
+                    <label
+                      htmlFor="forgot-email"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
+                    >
+                      <Mail size={14} className="text-gray-400" /> Email address
+                    </label>
+                    <input
+                      id="forgot-email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      className={inputClass}
+                      placeholder="you@example.com"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={forgotLoading}
+                    className="w-full flex justify-center py-3 px-4 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50 transition-all duration-200"
+                  >
+                    {forgotLoading ? (
+                      <Loader size={20} className="animate-spin" />
+                    ) : (
+                      'Send Reset Link'
+                    )}
+                  </button>
+                </form>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForgotPassword(false);
+                  setForgotSent(false);
+                  setForgotEmail('');
+                  setError(null);
+                }}
+                className="w-full flex items-center justify-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 font-medium py-2 transition-colors"
+              >
+                <ArrowLeft size={14} /> Back to Sign In
+              </button>
+            </div>
+          )}
+
           {/* ─── REGISTER STEP 1: Required Fields ─── */}
           {!isLogin && step === 1 && (
             <form onSubmit={handleNextStep} className="space-y-4">
               <div>
-                <label htmlFor="reg-name" className="block text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                  <User size={14} className="text-gray-400" /> Full Name <span className="text-red-400">*</span>
+                <label
+                  htmlFor="reg-name"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
+                >
+                  <User size={14} className="text-gray-400" /> Full Name{' '}
+                  <span className="text-red-400">*</span>
                 </label>
                 <input
                   id="reg-name"
@@ -248,8 +384,12 @@ const AuthScreen = () => {
                 />
               </div>
               <div>
-                <label htmlFor="reg-email" className="block text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                  <Mail size={14} className="text-gray-400" /> Email address <span className="text-red-400">*</span>
+                <label
+                  htmlFor="reg-email"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
+                >
+                  <Mail size={14} className="text-gray-400" /> Email address{' '}
+                  <span className="text-red-400">*</span>
                 </label>
                 <input
                   id="reg-email"
@@ -263,8 +403,12 @@ const AuthScreen = () => {
                 />
               </div>
               <div>
-                <label htmlFor="reg-password" className="block text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                  <Lock size={14} className="text-gray-400" /> Password <span className="text-red-400">*</span>
+                <label
+                  htmlFor="reg-password"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
+                >
+                  <Lock size={14} className="text-gray-400" /> Password{' '}
+                  <span className="text-red-400">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -288,8 +432,12 @@ const AuthScreen = () => {
                 </div>
               </div>
               <div>
-                <label htmlFor="reg-confirm-password" className="block text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                  <Lock size={14} className="text-gray-400" /> Confirm Password <span className="text-red-400">*</span>
+                <label
+                  htmlFor="reg-confirm-password"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
+                >
+                  <Lock size={14} className="text-gray-400" /> Confirm Password{' '}
+                  <span className="text-red-400">*</span>
                 </label>
                 <input
                   id="reg-confirm-password"
@@ -316,7 +464,10 @@ const AuthScreen = () => {
           {!isLogin && step === 2 && (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label htmlFor="reg-phone" className="block text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                <label
+                  htmlFor="reg-phone"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
+                >
                   <Phone size={14} className="text-gray-400" /> Phone Number
                 </label>
                 <input
@@ -330,7 +481,10 @@ const AuthScreen = () => {
                 />
               </div>
               <div>
-                <label htmlFor="reg-genre" className="block text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                <label
+                  htmlFor="reg-genre"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
+                >
                   <BookMarked size={14} className="text-gray-400" /> Favorite Genre
                 </label>
                 <select
@@ -341,12 +495,17 @@ const AuthScreen = () => {
                 >
                   <option value="">— Select a genre (optional) —</option>
                   {GENRE_OPTIONS.map((g) => (
-                    <option key={g} value={g}>{g}</option>
+                    <option key={g} value={g}>
+                      {g}
+                    </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label htmlFor="reg-bio" className="block text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                <label
+                  htmlFor="reg-bio"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
+                >
                   <FileText size={14} className="text-gray-400" /> Short Bio
                 </label>
                 <textarea
@@ -365,7 +524,7 @@ const AuthScreen = () => {
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="flex items-center justify-center gap-1.5 flex-1 py-3 px-4 rounded-xl text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+                  className="flex items-center justify-center gap-1.5 flex-1 py-3 px-4 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 >
                   <ArrowLeft size={16} /> Back
                 </button>
@@ -390,18 +549,20 @@ const AuthScreen = () => {
           )}
 
           {/* Toggle Login / Signup */}
-          <p className="mt-6 text-center text-sm text-gray-600">
-            {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
-            <button
-              onClick={() => {
-                setIsLogin(!isLogin);
-                resetForm();
-              }}
-              className="font-semibold text-indigo-600 hover:text-indigo-500 transition-colors"
-            >
-              {isLogin ? 'Sign Up' : 'Sign In'}
-            </button>
-          </p>
+          {!(isLogin && showForgotPassword) && (
+            <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+              {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
+              <button
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  resetForm();
+                }}
+                className="font-semibold text-indigo-600 hover:text-indigo-500 transition-colors"
+              >
+                {isLogin ? 'Sign Up' : 'Sign In'}
+              </button>
+            </p>
+          )}
         </div>
       </div>
     </div>

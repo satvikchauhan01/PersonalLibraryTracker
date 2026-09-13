@@ -17,7 +17,7 @@ const buildDateRange = (days = 365) => {
 
 // Color intensity based on pages read
 const getColor = (pages) => {
-  if (!pages || pages === 0) return 'bg-gray-100';
+  if (!pages || pages === 0) return 'bg-gray-100 dark:bg-gray-700';
   if (pages < 20) return 'bg-emerald-200';
   if (pages < 50) return 'bg-emerald-400';
   if (pages < 100) return 'bg-emerald-600';
@@ -87,20 +87,20 @@ const ReadingCalendar = ({ refreshTrigger }) => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 animate-pulse">
-        <div className="h-5 bg-gray-200 rounded w-48 mb-4" />
-        <div className="h-32 bg-gray-100 rounded" />
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 animate-pulse">
+        <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-4" />
+        <div className="h-32 bg-gray-100 dark:bg-gray-700 rounded" />
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
       {/* Header row */}
       <div className="flex flex-wrap items-center gap-6 mb-5">
         <div className="flex items-center gap-2">
           <Calendar size={20} className="text-indigo-600" />
-          <h3 className="text-lg font-bold text-gray-800">Reading Activity</h3>
+          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Reading Activity</h3>
         </div>
         {streakData && (
           <div className="flex gap-4 flex-wrap">
@@ -184,7 +184,7 @@ const ReadingCalendar = ({ refreshTrigger }) => {
           <div className="flex items-center gap-1 mt-2 ml-8">
             <span className="text-xs text-gray-400 mr-1">Less</span>
             {[
-              'bg-gray-100',
+              'bg-gray-100 dark:bg-gray-700',
               'bg-emerald-200',
               'bg-emerald-400',
               'bg-emerald-600',

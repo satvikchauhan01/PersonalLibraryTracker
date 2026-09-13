@@ -2,6 +2,7 @@ import express from 'express';
 import protect from '../middleware/authMiddleware.js';
 import { diaryLockMiddleware } from '../middleware/diaryMiddleware.js';
 import validate from '../middleware/validate.js';
+import checkAiQuota from '../middleware/checkAiQuota.js'; // Phase 09
 import { pinSchema, saveEntrySchema } from '../validators/diarySchemas.js';
 import {
   // Lock / PIN management
@@ -28,7 +29,7 @@ router.post('/lock/verify-pin', protect, validate(pinSchema), verifyPin);
 router.post('/lock/disable', protect, validate(pinSchema), disablePin);
 
 // ── AI writing prompt (no diary lock required – just a spark for the day) ──
-router.get('/prompt', protect, getWritingPrompt);
+router.get('/prompt', protect, checkAiQuota, getWritingPrompt);
 
 // ── Stats (protected by diary lock) ──
 router.get('/stats', protect, diaryLockMiddleware, getDiaryStats);

@@ -42,7 +42,14 @@ const diaryEntrySchema = mongoose.Schema(
     gratitude: {
       type: [String],
       default: [],
-      validate: [arr => arr.length <= 3, 'Maximum 3 gratitude bullets allowed'],
+      validate: [(arr) => arr.length <= 3, 'Maximum 3 gratitude bullets allowed'],
+    },
+    // Phase 10: Cloudinary URLs, uploaded via POST /api/upload/diary-image
+    // then attached here through the normal save-entry flow
+    images: {
+      type: [String],
+      default: [],
+      validate: [(arr) => arr.length <= 4, 'Maximum 4 images allowed'],
     },
     wordCount: {
       type: Number,

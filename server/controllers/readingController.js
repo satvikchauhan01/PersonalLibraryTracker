@@ -1,11 +1,48 @@
 import Book from '../models/Book.js';
 import ReadingSession from '../models/ReadingSession.js';
+import { logActivity } from './activityController.js'; // Phase 08
+import { notifyUser } from '../services/notificationService.js'; // Phase 11
 
 // Helper: today as YYYY-MM-DD in local time
 const getLocalDateStr = (d = new Date()) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 const todayStr = () => getLocalDateStr();
+
+// Phase 08: streak milestones worth a live activity-feed shout-out.
+// Phase 11 reuses this same threshold set for the personal streak-alert
+// notification below, so the two can never quietly drift apart.
+const STREAK_MILESTONES = new Set([7, 30, 100]);
+
+// Shared by getStreak and logSession's milestone check — same algorithm,
+// one place, so the two never quietly drift apart.
+const computeCurrentStreak = (dateSet) => {
+  let streak = 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let current = new Date(today);
+  let counting = true;
+
+  while (counting) {
+    const ds = getLocalDateStr(current);
+    if (dateSet.has(ds)) {
+      streak++;
+      current.setDate(current.getDate() - 1);
+    } else {
+      if (streak === 0) {
+        current.setDate(current.getDate() - 1);
+        const yds = getLocalDateStr(current);
+        if (dateSet.has(yds)) {
+          streak++;
+          current.setDate(current.getDate() - 1);
+          continue;
+        }
+      }
+      counting = false;
+    }
+  }
+  return streak;
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROGRESS UPDATE
@@ -28,6 +65,8 @@ export const updateProgress = async (req, res) => {
       return res.status(401).json({ message: 'Not authorized.' });
     }
 
+    const wasCompleted = book.status === 'completed'; // Phase 08: detect the transition below
+
     // Set startDate when transitioning into 'reading' for the first time
     if (book.status === 'wantToRead' && !book.startDate) {
       book.startDate = new Date();
@@ -47,6 +86,10 @@ export const updateProgress = async (req, res) => {
 
     const updated = await book.save();
     res.json(updated);
+
+    if (!wasCompleted && updated.status === 'completed') {
+      logActivity(req.user._id, 'book_completed', updated);
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -86,6 +129,8 @@ export const logSession = async (req, res) => {
 
     // Optionally advance currentPage on the book
     if (currentPage !== undefined && typeof currentPage === 'number') {
+      const wasCompleted = book.status === 'completed'; // Phase 08: detect the transition below
+
       // Set startDate when starting for the first time
       if (book.status === 'wantToRead' && !book.startDate) {
         book.startDate = new Date();
@@ -104,9 +149,36 @@ export const logSession = async (req, res) => {
       }
 
       await book.save();
+
+      if (!wasCompleted && book.status === 'completed') {
+        logActivity(req.user._id, 'book_completed', book);
+      }
     }
 
     res.status(201).json({ session, book });
+
+    // Phase 08: streak-milestone shout-out — same algorithm getStreak uses,
+    // run here too so a fresh log can react to it right away instead of
+    // waiting for the next time someone loads the streak widget.
+    ReadingSession.find({ user: req.user.id })
+      .select('date')
+      .lean()
+      .then((allSessions) => {
+        const streak = computeCurrentStreak(new Set(allSessions.map((s) => s.date)));
+        if (STREAK_MILESTONES.has(streak)) {
+          logActivity(req.user._id, 'reading_streak', null, { streakDays: streak });
+          // Phase 11: a personal notification too, not just the friends
+          // activity feed — this is the one thing STREAK_MILESTONES gates
+          // that's actually about the reader themselves.
+          notifyUser(
+            req.user._id,
+            'streak_milestone',
+            `🔥 ${streak}-day reading streak! Keep it going.`,
+            { metadata: { streakDays: streak } }
+          );
+        }
+      })
+      .catch(() => {});
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -154,32 +226,7 @@ export const getStreak = async (req, res) => {
     if (sessions.length > 0) {
       // Build a Set of unique date strings
       const dateSet = new Set(sessions.map((s) => s.date));
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      let current = new Date(today);
-      let counting = true;
-
-      while (counting) {
-        const ds = getLocalDateStr(current);
-        if (dateSet.has(ds)) {
-          streak++;
-          current.setDate(current.getDate() - 1);
-        } else {
-          // Allow grace: if streak === 0 and today hasn't been logged yet, check yesterday
-          if (streak === 0) {
-            current.setDate(current.getDate() - 1);
-            const yds = getLocalDateStr(current);
-            if (dateSet.has(yds)) {
-              streak++;
-              current.setDate(current.getDate() - 1);
-              continue;
-            }
-          }
-          counting = false;
-        }
-      }
+      streak = computeCurrentStreak(dateSet);
 
       // Compute longest streak across all dates
       const sortedDates = [...dateSet].sort();

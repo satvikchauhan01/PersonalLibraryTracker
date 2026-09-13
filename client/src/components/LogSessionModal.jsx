@@ -63,7 +63,7 @@ const LogSessionModal = ({ book, onClose, onSaved }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 flex justify-between items-start">
           <div>
@@ -84,8 +84,8 @@ const LogSessionModal = ({ book, onClose, onSaved }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Progress preview */}
           {book.totalPages > 0 && (
-            <div className="bg-indigo-50 rounded-xl p-3">
-              <div className="flex justify-between text-sm text-indigo-700 font-medium mb-1.5">
+            <div className="bg-indigo-50 dark:bg-indigo-950/40 rounded-xl p-3">
+              <div className="flex justify-between text-sm text-indigo-700 dark:text-indigo-300 font-medium mb-1.5">
                 <span>Progress</span>
                 <span>
                   {parseInt(form.currentPage, 10) || book.currentPage} / {book.totalPages} pages (
@@ -110,7 +110,7 @@ const LogSessionModal = ({ book, onClose, onSaved }) => {
 
           {/* Pages read */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
               Pages Read <span className="text-red-500">*</span>
             </label>
             <input
@@ -121,13 +121,13 @@ const LogSessionModal = ({ book, onClose, onSaved }) => {
               min="1"
               placeholder="e.g. 45"
               required
-              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 rounded-xl px-4 py-2.5 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
 
           {/* Current page (optional) */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
               <TrendingUp size={14} className="inline mr-1 text-indigo-500" />
               Now on page
               <span className="text-gray-400 font-normal ml-1">(updates progress bar)</span>
@@ -140,14 +140,14 @@ const LogSessionModal = ({ book, onClose, onSaved }) => {
               min="0"
               max={book.totalPages || undefined}
               placeholder={`Currently on page ${book.currentPage || 0}`}
-              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 rounded-xl px-4 py-2.5 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             {/* Duration */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
                 <Clock size={14} className="inline mr-1 text-indigo-500" />
                 Duration (min)
               </label>
@@ -158,26 +158,28 @@ const LogSessionModal = ({ book, onClose, onSaved }) => {
                 onChange={handleChange}
                 min="1"
                 placeholder="e.g. 30"
-                className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 rounded-xl px-4 py-2.5 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400"
               />
             </div>
             {/* Date */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Date</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                Date
+              </label>
               <input
                 type="date"
                 name="date"
                 value={form.date}
                 onChange={handleChange}
                 max={getLocalDateStr()}
-                className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 rounded-xl px-4 py-2.5 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400"
               />
             </div>
           </div>
 
           {/* Note */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
               <FileText size={14} className="inline mr-1 text-indigo-500" />
               Note <span className="text-gray-400 font-normal">(optional)</span>
             </label>
@@ -187,7 +189,7 @@ const LogSessionModal = ({ book, onClose, onSaved }) => {
               onChange={handleChange}
               rows={2}
               placeholder="What did you think of today's reading?"
-              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+              className="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 rounded-xl px-4 py-2.5 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
             />
           </div>
 
@@ -196,7 +198,7 @@ const LogSessionModal = ({ book, onClose, onSaved }) => {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition"
+              className="flex-1 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition"
             >
               Cancel
             </button>
