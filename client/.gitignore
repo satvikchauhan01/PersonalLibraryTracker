@@ -50,6 +50,12 @@ expo-shared/
 # Testing
 coverage/
 
+# Playwright (Phase 14 e2e — client/e2e/)
+e2e/test-results/
+e2e/playwright-report/
+e2e/.e2e-pids.json
+e2e/node_modules/
+
 # Temporary files
 tmp/
 temp/

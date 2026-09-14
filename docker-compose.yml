@@ -1,0 +1,62 @@
+# Phase 16: `docker compose up` from a clean clone should reach a working
+# login screen with zero manual steps — every env var below has a working
+# local-dev default baked in (the JWT secret is a placeholder, obviously not
+# for production use). Razorpay/Cloudinary/Resend are deliberately left
+# unset: every feature that depends on them was built (Phases 09/10/12) to
+# degrade gracefully rather than crash when unconfigured, so the app is
+# fully usable without them — add real keys to a local .env override if you
+# want to exercise those specific features.
+#
+# Usage:  docker compose up --build
+# Then:   http://localhost:3000
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+
+  server:
+    build:
+      context: ./server
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    ports:
+      - '5001:5001'
+    environment:
+      PORT: 5001
+      NODE_ENV: development
+      MONGO_URI: mongodb://mongo:27017/library-tracker
+      JWT_SECRET: dev-only-secret-change-me
+      CLIENT_URL: http://localhost:3000
+      # Optional integrations — unset is fine, see comment above.
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
+      RAZORPAY_PLAN_ID: ${RAZORPAY_PLAN_ID:-}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+
+  client:
+    build:
+      context: ./client
+      args:
+        # CRA bakes this into the static bundle at build time — it has to be
+        # the browser-reachable address (the host-mapped port), not the
+        # Docker-internal service name.
+        REACT_APP_API_URL: http://localhost:5001/api
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - '3000:80'
+
+volumes:
+  mongo_data:

@@ -1,0 +1,26 @@
+name: Deploy
+
+# Phase 16: fires a Render deploy hook once CI has actually passed on main —
+# `workflow_run` (not a plain `push` trigger) is what makes this wait for
+# ci.yml's conclusion rather than deploying in parallel with, or ahead of, a
+# CI run that might fail. Vercel deploys the client itself via its own
+# GitHub integration and needs nothing here.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy-render:
+    name: Trigger Render deploy hook
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Trigger Render deploy hook
+        run: |
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL secret not set — add it in repo Settings > Secrets and variables > Actions to enable auto-deploy. Skipping for now."
+            exit 0
+          fi
+          curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"

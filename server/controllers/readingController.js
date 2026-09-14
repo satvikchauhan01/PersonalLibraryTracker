@@ -2,47 +2,10 @@ import Book from '../models/Book.js';
 import ReadingSession from '../models/ReadingSession.js';
 import { logActivity } from './activityController.js'; // Phase 08
 import { notifyUser } from '../services/notificationService.js'; // Phase 11
+import { getLocalDateStr, STREAK_MILESTONES, computeCurrentStreak } from '../utils/streak.js'; // Phase 14: extracted for unit testing
+import Sentry from '../config/sentry.js'; // Phase 17
 
-// Helper: today as YYYY-MM-DD in local time
-const getLocalDateStr = (d = new Date()) => {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
 const todayStr = () => getLocalDateStr();
-
-// Phase 08: streak milestones worth a live activity-feed shout-out.
-// Phase 11 reuses this same threshold set for the personal streak-alert
-// notification below, so the two can never quietly drift apart.
-const STREAK_MILESTONES = new Set([7, 30, 100]);
-
-// Shared by getStreak and logSession's milestone check — same algorithm,
-// one place, so the two never quietly drift apart.
-const computeCurrentStreak = (dateSet) => {
-  let streak = 0;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  let current = new Date(today);
-  let counting = true;
-
-  while (counting) {
-    const ds = getLocalDateStr(current);
-    if (dateSet.has(ds)) {
-      streak++;
-      current.setDate(current.getDate() - 1);
-    } else {
-      if (streak === 0) {
-        current.setDate(current.getDate() - 1);
-        const yds = getLocalDateStr(current);
-        if (dateSet.has(yds)) {
-          streak++;
-          current.setDate(current.getDate() - 1);
-          continue;
-        }
-      }
-      counting = false;
-    }
-  }
-  return streak;
-};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROGRESS UPDATE
@@ -91,6 +54,7 @@ export const updateProgress = async (req, res) => {
       logActivity(req.user._id, 'book_completed', updated);
     }
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -180,6 +144,7 @@ export const logSession = async (req, res) => {
       })
       .catch(() => {});
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -201,6 +166,7 @@ export const getSessions = async (req, res) => {
     });
     res.json(sessions);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -247,6 +213,7 @@ export const getStreak = async (req, res) => {
 
     res.json({ streak, longestStreak, totalSessions, totalPages });
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -289,6 +256,7 @@ export const getCalendar = async (req, res) => {
 
     res.json(calendar);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };

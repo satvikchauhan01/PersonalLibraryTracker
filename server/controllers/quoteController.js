@@ -1,5 +1,6 @@
 import Quote from '../models/Quote.js';
 import Book from '../models/Book.js';
+import Sentry from '../config/sentry.js'; // Phase 17
 
 // @desc    List the current user's quotes, newest first (optionally filtered by book)
 // @route   GET /api/quotes?book=:bookId
@@ -12,6 +13,7 @@ export const getQuotes = async (req, res) => {
     const quotes = await Quote.find(filter).sort({ createdAt: -1 });
     res.json(quotes);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -36,6 +38,7 @@ export const createQuote = async (req, res) => {
     });
     res.status(201).json(quote);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -57,6 +60,7 @@ export const updateQuote = async (req, res) => {
     await quote.save();
     res.json(quote);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -75,6 +79,7 @@ export const deleteQuote = async (req, res) => {
     await quote.deleteOne();
     res.json({ message: 'Quote removed.' });
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };

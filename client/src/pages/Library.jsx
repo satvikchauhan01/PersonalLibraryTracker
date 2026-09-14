@@ -12,6 +12,7 @@ import ActivityFeed from '../components/ActivityFeed';
 import ImportExportModal from '../components/ImportExportModal';
 import Pagination from '../components/Pagination';
 import { setRating, toggleFavorite } from '../services/organizationService';
+import { aiSearch } from '../services/aiService'; // Phase 18
 import {
   BookOpen,
   Book,
@@ -23,6 +24,8 @@ import {
   PauseCircle,
   SlidersHorizontal,
   ArrowLeftRight,
+  Sparkles,
+  Loader2,
 } from 'lucide-react';
 
 // Phase 04: extended status list
@@ -59,10 +62,17 @@ const Library = () => {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [genreFilter, setGenreFilter] = useState('');
   const [minRating, setMinRating] = useState('');
+  const [tagFilter, setTagFilter] = useState(''); // Phase 18: only settable via AI search today
   const [sortOption, setSortOption] = useState(SORT_OPTIONS[0].id);
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
+
+  // Phase 18: natural-language search
+  const [showAiSearch, setShowAiSearch] = useState(false);
+  const [aiQuery, setAiQuery] = useState('');
+  const [aiSearchLoading, setAiSearchLoading] = useState(false);
+  const [aiSearchError, setAiSearchError] = useState('');
 
   // Stats reflect the whole library regardless of the current filters —
   // fetched separately so paging/searching never distorts the counts.
@@ -93,7 +103,7 @@ const Library = () => {
   // Reset to page 1 whenever a filter/search/sort actually changes
   useEffect(() => {
     setPage(1);
-  }, [activeFilter, debouncedSearch, genreFilter, minRating, sortOption]);
+  }, [activeFilter, debouncedSearch, genreFilter, minRating, tagFilter, sortOption]);
 
   const sortConfig = SORT_OPTIONS.find((o) => o.id === sortOption) || SORT_OPTIONS[0];
 
@@ -108,6 +118,7 @@ const Library = () => {
           q: debouncedSearch || undefined,
           genre: genreFilter || undefined,
           minRating: minRating || undefined,
+          tag: tagFilter || undefined, // Phase 18
           sortBy: sortConfig.sortBy,
           sortDir: sortConfig.sortDir,
         },
@@ -119,7 +130,7 @@ const Library = () => {
     }
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, activeFilter, debouncedSearch, genreFilter, minRating, sortOption]);
+  }, [page, activeFilter, debouncedSearch, genreFilter, minRating, tagFilter, sortOption]);
 
   // Independent of filters — always the true per-status counts across the library
   const fetchStats = useCallback(async () => {
@@ -212,6 +223,50 @@ const Library = () => {
     } catch (error) {
       console.error('Error toggling favorite:', error);
       fetchBooks();
+    }
+  };
+
+  // ── Phase 18: natural-language search ───────────────────────────────────
+  const handleAiSearch = async (e) => {
+    e.preventDefault();
+    if (!aiQuery.trim() || aiSearchLoading) return;
+    setAiSearchLoading(true);
+    setAiSearchError('');
+    try {
+      const { data } = await aiSearch(aiQuery.trim());
+      const { filters } = data;
+
+      // A fresh AI search replaces the current filter set rather than
+      // merging with it — otherwise a leftover manual filter could silently
+      // narrow (or contradict) what was just asked for.
+      setActiveFilter(filters.status || 'all');
+      setSearchInput(filters.q || '');
+      setGenreFilter(filters.genre || '');
+      setTagFilter(filters.tag || '');
+      setMinRating(filters.minRating != null ? String(filters.minRating) : '');
+
+      const matchedSort = SORT_OPTIONS.find(
+        (o) => o.sortBy === filters.sortBy && o.sortDir === (filters.sortDir || 'desc')
+      );
+      setSortOption(matchedSort ? matchedSort.id : SORT_OPTIONS[0].id);
+
+      // Surface the applied genre/rating/tag filters in the "more filters"
+      // panel so the AI-derived search isn't invisible/confusing.
+      if (filters.genre || filters.minRating != null || filters.tag) {
+        setShowMoreFilters(true);
+      }
+      setShowAiSearch(false);
+      setAiQuery('');
+    } catch (err) {
+      if (err.response?.status === 402) {
+        setAiSearchError("You've used all your free AI calls this month. Upgrade to Library Pro.");
+      } else if (err.response?.status === 503) {
+        setAiSearchError('AI features are not configured on this server yet.');
+      } else {
+        setAiSearchError(err.response?.data?.message || 'Could not interpret that search.');
+      }
+    } finally {
+      setAiSearchLoading(false);
     }
   };
 
@@ -312,13 +367,25 @@ const Library = () => {
           <button
             onClick={() => setShowMoreFilters((prev) => !prev)}
             className={`flex-shrink-0 inline-flex items-center px-3 py-2 rounded-full border text-sm font-medium transition-colors ${
-              showMoreFilters || genreFilter || minRating
+              showMoreFilters || genreFilter || minRating || tagFilter
                 ? 'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
                 : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
             title="More filters"
           >
             <SlidersHorizontal size={16} />
+          </button>
+          {/* Phase 18: natural-language search */}
+          <button
+            onClick={() => setShowAiSearch((prev) => !prev)}
+            className={`flex-shrink-0 inline-flex items-center px-3 py-2 rounded-full border text-sm font-medium transition-colors ${
+              showAiSearch
+                ? 'bg-purple-50 dark:bg-purple-950/50 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300'
+                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+            title="Ask in plain English"
+          >
+            <Sparkles size={16} />
           </button>
           <button
             onClick={() => setShowImportExport(true)}
@@ -329,6 +396,36 @@ const Library = () => {
           </button>
         </div>
       </div>
+
+      {/* Phase 18: natural-language search panel */}
+      {showAiSearch && (
+        <div className="mb-6 p-4 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-lg">
+          <form onSubmit={handleAiSearch} className="flex gap-2">
+            <input
+              type="text"
+              value={aiQuery}
+              onChange={(e) => setAiQuery(e.target.value)}
+              placeholder="e.g. short fantasy books I rated highly last year"
+              autoFocus
+              className="flex-grow rounded-md border-purple-300 dark:border-purple-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm text-sm px-3 py-2 border focus:border-purple-500 focus:ring-purple-500"
+            />
+            <button
+              type="submit"
+              disabled={aiSearchLoading || !aiQuery.trim()}
+              className="flex-shrink-0 inline-flex items-center px-4 py-2 rounded-md bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 disabled:opacity-50"
+            >
+              {aiSearchLoading ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Sparkles size={16} />
+              )}
+            </button>
+          </form>
+          {aiSearchError && (
+            <p className="mt-2 text-sm text-red-600 dark:text-red-400">{aiSearchError}</p>
+          )}
+        </div>
+      )}
 
       {/* Phase 06: Genre / rating / sort filters */}
       {showMoreFilters && (
@@ -364,6 +461,18 @@ const Library = () => {
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Tag
+            </label>
+            <input
+              type="text"
+              value={tagFilter}
+              onChange={(e) => setTagFilter(e.target.value)}
+              placeholder="e.g. cozy"
+              className="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm text-sm px-3 py-1.5 border focus:border-indigo-500 focus:ring-indigo-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
               Sort by
             </label>
             <select
@@ -378,11 +487,12 @@ const Library = () => {
               ))}
             </select>
           </div>
-          {(genreFilter || minRating) && (
+          {(genreFilter || minRating || tagFilter) && (
             <button
               onClick={() => {
                 setGenreFilter('');
                 setMinRating('');
+                setTagFilter('');
               }}
               className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 pb-1.5"
             >

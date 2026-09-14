@@ -1,5 +1,6 @@
 import { Parser as CsvParser } from 'json2csv'; // Phase 13
 import Book from '../models/Book.js';
+import Sentry from '../config/sentry.js'; // Phase 17
 import Shelf from '../models/Shelf.js';
 import Review from '../models/Review.js'; // Phase 13: pulled into export
 import { logActivity } from './activityController.js'; // Phase 08
@@ -97,6 +98,7 @@ export const getBooks = async (req, res) => {
 
     res.json({ books, page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) });
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -117,6 +119,7 @@ export const addBook = async (req, res) => {
     totalPages,
     startDate,
     finishDate,
+    description, // Phase 18
   } = req.body;
 
   try {
@@ -156,6 +159,7 @@ export const addBook = async (req, res) => {
       totalPages: totalPages || 0,
       startDate: resolvedStartDate,
       finishDate: resolvedFinishDate,
+      description: description || null, // Phase 18
     });
 
     const createdBook = await book.save();
@@ -174,6 +178,7 @@ export const addBook = async (req, res) => {
         message: 'You already have this book in your library.',
       });
     }
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -193,6 +198,7 @@ export const updateBook = async (req, res) => {
     totalPages,
     startDate,
     finishDate,
+    description, // Phase 18
   } = req.body;
 
   try {
@@ -208,12 +214,21 @@ export const updateBook = async (req, res) => {
     }
 
     const wasCompleted = book.status === 'completed'; // Phase 08: detect the transition below
+    // Phase 18: whatever "similar books" embeds is built from these fields —
+    // if any of them actually change, the cached embedding below is stale.
+    const embeddingInputs = {
+      title: book.title,
+      author: book.author,
+      genre: book.genre,
+      description: book.description,
+    };
 
     book.title = title || book.title;
     book.author = author || book.author;
     book.genre = genre || book.genre;
     book.status = status || book.status;
     book.coverUrl = coverUrl || book.coverUrl;
+    if (description !== undefined) book.description = description || null; // Phase 18
     // Phase 03: Allow updating isbn (explicit null clears it)
     if (isbn !== undefined) {
       book.isbn = isbn || null;
@@ -244,12 +259,34 @@ export const updateBook = async (req, res) => {
     if (!wasCompleted && updatedBook.status === 'completed') {
       logActivity(req.user._id, 'book_completed', updatedBook);
     }
+
+    // Phase 18: drop the cached embedding/summary if the content they were
+    // built from actually changed, so getSimilarBooks/getBookSummary
+    // recompute instead of quietly serving stale AI output. Fire-and-forget,
+    // after the response — mirrors logActivity's pattern above.
+    if (
+      updatedBook.title !== embeddingInputs.title ||
+      updatedBook.author !== embeddingInputs.author ||
+      updatedBook.genre !== embeddingInputs.genre ||
+      updatedBook.description !== embeddingInputs.description
+    ) {
+      Book.updateOne(
+        { _id: updatedBook._id },
+        {
+          $unset: { embedding: '', embeddingUpdatedAt: '' },
+          $set: { aiSummary: null, aiSummaryGeneratedAt: null },
+        }
+      ).catch((err) =>
+        console.error('[ai] failed to invalidate stale embedding/summary:', err.message)
+      );
+    }
   } catch (error) {
     if (error.code === 11000) {
       return res.status(409).json({
         message: 'Another book in your library already has this ISBN.',
       });
     }
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -273,6 +310,7 @@ export const deleteBook = async (req, res) => {
     await book.deleteOne();
     res.json({ message: 'Book removed' });
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -370,6 +408,7 @@ export const exportBooks = async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="library-export-${timestamp}.json"`);
     res.json(rows);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };

@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { getRazorpay } from '../config/razorpay.js';
+import Sentry from '../config/sentry.js'; // Phase 17
 import Subscription from '../models/Subscription.js';
 import ProcessedWebhookEvent from '../models/ProcessedWebhookEvent.js';
 import User from '../models/User.js';
@@ -41,6 +42,7 @@ export const subscribe = async (req, res) => {
     });
   } catch (error) {
     console.error('subscribe error:', error.message);
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: 'Could not start a subscription.' });
   }
 };
@@ -77,6 +79,7 @@ export const verify = async (req, res) => {
     res.json({ message: 'Payment verified.' });
   } catch (error) {
     console.error('verify error:', error.message);
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: 'Server error verifying payment.' });
   }
 };
@@ -202,6 +205,7 @@ export const cancel = async (req, res) => {
     res.json({ message: 'Your subscription will end at the close of the current billing period.' });
   } catch (error) {
     console.error('cancel error:', error.message);
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: 'Could not cancel the subscription.' });
   }
 };
@@ -223,6 +227,7 @@ export const getStatus = async (req, res) => {
         : null,
     });
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };

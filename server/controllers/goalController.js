@@ -1,6 +1,7 @@
 import ReadingGoal from '../models/ReadingGoal.js';
 import Book from '../models/Book.js';
 import ReadingSession from '../models/ReadingSession.js';
+import Sentry from '../config/sentry.js'; // Phase 17
 
 // Turns a goal's year/period/month into a [start, end) window, both as real
 // Dates (for Book.finishDate) and as 'YYYY-MM-DD' strings (for
@@ -55,6 +56,7 @@ export const getGoals = async (req, res) => {
     const goals = await ReadingGoal.find({ user: req.user.id }).sort({ year: -1, month: 1 });
     res.json(goals);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -78,6 +80,7 @@ export const createGoal = async (req, res) => {
     if (error.code === 11000) {
       return res.status(409).json({ message: 'You already have a goal for this period.' });
     }
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -97,6 +100,7 @@ export const updateGoal = async (req, res) => {
     await goal.save();
     res.json(goal);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -115,6 +119,7 @@ export const deleteGoal = async (req, res) => {
     await goal.deleteOne();
     res.json({ message: 'Goal removed.' });
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -144,6 +149,7 @@ export const getGoalsProgress = async (req, res) => {
 
     res.json(progress);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };

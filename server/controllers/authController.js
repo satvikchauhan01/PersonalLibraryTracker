@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import RefreshToken from '../models/RefreshToken.js';
+import Sentry from '../config/sentry.js'; // Phase 17
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -96,6 +97,7 @@ export const registerUser = async (req, res) => {
       const messages = Object.values(error.errors).map((e) => e.message);
       return res.status(400).json({ message: messages.join(', ') });
     }
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -119,6 +121,7 @@ export const loginUser = async (req, res) => {
       res.status(401).json({ message: 'Invalid email or password' });
     }
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -179,6 +182,7 @@ export const refreshToken = async (req, res) => {
     res.json({ accessToken: generateAccessToken(user) });
   } catch (error) {
     console.error('refreshToken error:', error);
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: 'Server error.' });
   }
 };
@@ -220,6 +224,7 @@ export const forgotPassword = async (req, res) => {
 
     res.json({ message: 'If that email is registered, a reset link has been sent.' });
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -257,6 +262,7 @@ export const resetPassword = async (req, res) => {
 
     res.json({ message: 'Password reset. Please log in with your new password.' });
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -272,6 +278,7 @@ export const getMe = async (req, res) => {
     }
     res.json(userResponse(user));
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -302,6 +309,7 @@ export const updateProfile = async (req, res) => {
       const messages = Object.values(error.errors).map((e) => e.message);
       return res.status(400).json({ message: messages.join(', ') });
     }
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -322,6 +330,7 @@ export const updateNotificationPrefs = async (req, res) => {
     await user.save();
     res.json(userResponse(user));
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -334,6 +343,7 @@ export const getAdminStats = async (req, res) => {
     const totalUsers = await User.countDocuments();
     res.json({ totalUsers });
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };

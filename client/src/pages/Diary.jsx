@@ -13,6 +13,7 @@ import {
 } from '../services/diaryService';
 import DiaryPinModal from '../components/DiaryPinModal';
 import { uploadDiaryImage } from '../services/uploadService'; // Phase 10
+import { askDiary } from '../services/aiService'; // Phase 18
 import {
   Lock,
   Sparkles,
@@ -32,6 +33,8 @@ import {
   PenLine,
   Loader2,
   Plus,
+  MessageCircle,
+  Send,
 } from 'lucide-react';
 
 // ─── Mood Configuration ────────────────────────────────────────────────────
@@ -155,6 +158,12 @@ const Diary = () => {
   // AI Prompt
   const [aiPrompt, setAiPrompt] = useState('');
   const [promptLoading, setPromptLoading] = useState(false);
+
+  // Phase 18: Ask Your Diary (RAG)
+  const [askQuestion, setAskQuestion] = useState('');
+  const [askAnswer, setAskAnswer] = useState(null); // { answer, sources }
+  const [askLoading, setAskLoading] = useState(false);
+  const [askError, setAskError] = useState('');
 
   // Tag input
   const [tagInput, setTagInput] = useState('');
@@ -363,6 +372,29 @@ const Diary = () => {
       setAiPrompt('What is one small thing that made you smile today?');
     } finally {
       setPromptLoading(false);
+    }
+  };
+
+  // ── Ask Your Diary (Phase 18) ───────────────────────────────────────────
+  const handleAskDiary = async (e) => {
+    e.preventDefault();
+    if (!askQuestion.trim() || askLoading) return;
+    setAskLoading(true);
+    setAskError('');
+    setAskAnswer(null);
+    try {
+      const { data } = await askDiary(askQuestion.trim());
+      setAskAnswer(data);
+    } catch (err) {
+      if (err.response?.status === 402) {
+        setAskError("You've used all your free AI calls this month. Upgrade to Library Pro.");
+      } else if (err.response?.status === 503) {
+        setAskError('AI features are not configured on this server yet.');
+      } else {
+        setAskError(err.response?.data?.message || 'Could not answer that right now.');
+      }
+    } finally {
+      setAskLoading(false);
     }
   };
 
@@ -630,6 +662,51 @@ const Diary = () => {
               )}
             </div>
           )}
+
+          {/* Phase 18: Ask Your Diary (RAG) */}
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex flex-col gap-3">
+            <h3 className="text-sm font-semibold text-gray-300 flex items-center gap-2">
+              <MessageCircle size={16} className="text-purple-400" /> Ask Your Diary
+            </h3>
+            <form onSubmit={handleAskDiary} className="flex gap-2">
+              <input
+                type="text"
+                value={askQuestion}
+                onChange={(e) => setAskQuestion(e.target.value)}
+                placeholder="How was I feeling last month?"
+                className="flex-1 bg-gray-800 border border-gray-700 text-gray-200 placeholder-gray-600 text-xs rounded-lg px-3 py-2 outline-none focus:border-purple-500 transition-colors"
+              />
+              <button
+                type="submit"
+                disabled={askLoading || !askQuestion.trim()}
+                className="flex-shrink-0 px-3 py-2 bg-purple-700/40 border border-purple-600/40 text-purple-300 rounded-lg hover:bg-purple-700/60 transition-colors disabled:opacity-50"
+              >
+                {askLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+              </button>
+            </form>
+
+            {askError && <p className="text-xs text-red-400">{askError}</p>}
+
+            {askAnswer && (
+              <div className="bg-gray-800/60 border border-gray-700 rounded-xl p-3 flex flex-col gap-2">
+                <p className="text-xs text-gray-200 leading-relaxed">{askAnswer.answer}</p>
+                {askAnswer.sources?.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1 border-t border-gray-700">
+                    {askAnswer.sources.map((s) => (
+                      <button
+                        key={s.date}
+                        onClick={() => setSelectedDate(s.date)}
+                        className="text-[10px] px-2 py-0.5 rounded-full bg-purple-900/40 border border-purple-700/40 text-purple-300 hover:bg-purple-900/70 transition-colors"
+                        title="Jump to this entry"
+                      >
+                        {s.date}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Recent Entries List */}
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex flex-col gap-2 max-h-80 overflow-y-auto">

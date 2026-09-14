@@ -2,6 +2,7 @@ import Book from '../models/Book.js';
 import Review from '../models/Review.js';
 import Note from '../models/Note.js';
 import { logActivity } from './activityController.js'; // Phase 08
+import Sentry from '../config/sentry.js'; // Phase 17
 
 // Shared ownership check — returns the book or null after already responding.
 const loadOwnedBook = async (req, res) => {
@@ -38,6 +39,7 @@ export const setRating = async (req, res) => {
       logActivity(req.user._id, 'book_rated', book, { rating: book.rating });
     }
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -58,6 +60,7 @@ export const setFavorite = async (req, res) => {
     await book.save();
     res.json({ _id: book._id, isFavorite: book.isFavorite });
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -89,6 +92,7 @@ export const setTags = async (req, res) => {
     await book.save();
     res.json({ _id: book._id, tags: book.tags });
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -112,6 +116,7 @@ export const saveReview = async (req, res) => {
     );
     res.json(review);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -130,6 +135,7 @@ export const getReview = async (req, res) => {
     }
     res.json(review);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -145,6 +151,7 @@ export const deleteReview = async (req, res) => {
     await Review.findOneAndDelete({ user: req.user.id, book: book._id });
     res.json({ message: 'Review removed.' });
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -168,6 +175,7 @@ export const saveNote = async (req, res) => {
     );
     res.json(note);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -186,6 +194,7 @@ export const getNote = async (req, res) => {
     }
     res.json(note);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };

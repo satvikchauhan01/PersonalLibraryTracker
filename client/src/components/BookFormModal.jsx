@@ -21,6 +21,7 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
     isbn: '',
     totalPages: '',
     currentPage: '',
+    description: '', // Phase 18: optional — feeds the AI "similar books"/summary features
   });
 
   // Lookup tab state
@@ -51,6 +52,7 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
         isbn: editingBook.isbn || '',
         totalPages: editingBook.totalPages || '',
         currentPage: editingBook.currentPage || '',
+        description: editingBook.description || '',
       });
     } else {
       resetAll();
@@ -67,6 +69,7 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
       isbn: '',
       totalPages: '',
       currentPage: '',
+      description: '',
     });
     setIsbnQuery('');
     setIsbnError('');
@@ -109,6 +112,7 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
         isbn: book.isbn || digits,
         totalPages: '',
         currentPage: '',
+        description: book.description || '',
       });
       setIsbnSuccess(true);
     } catch (err) {
@@ -155,6 +159,7 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
       isbn: '',
       totalPages: '',
       currentPage: '',
+      description: book.description || '',
     });
     setSearchResults([]);
     setSearchQuery('');
@@ -172,6 +177,7 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
       // Phase 04: coerce progress fields to numbers or omit
       totalPages: formState.totalPages !== '' ? Number(formState.totalPages) : undefined,
       currentPage: formState.currentPage !== '' ? Number(formState.currentPage) : undefined,
+      description: formState.description.trim() || undefined, // Phase 18
     };
 
     try {
@@ -399,6 +405,31 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
               value={formState.genre}
               onChange={handleInputChange}
               className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
+            />
+          </div>
+
+          {/* Phase 18: optional blurb — richer input for "similar books" and the
+              spoiler-light AI summary than title/author/genre alone. Auto-filled
+              by ISBN lookup / title search when the source has one. */}
+          <div>
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Description{' '}
+              <span className="text-xs font-normal text-gray-400">
+                (optional — helps AI features)
+              </span>
+            </label>
+            <textarea
+              name="description"
+              id="description"
+              value={formState.description}
+              onChange={handleInputChange}
+              rows={3}
+              maxLength={2000}
+              placeholder="A short blurb about the book..."
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border resize-none text-sm"
             />
           </div>
 

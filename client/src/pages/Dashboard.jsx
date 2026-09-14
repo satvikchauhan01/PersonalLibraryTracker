@@ -14,6 +14,7 @@ import {
 } from 'recharts';
 import { getGoalsProgress, createGoal, deleteGoal } from '../services/goalService';
 import { getOverview } from '../services/analyticsService';
+import { getHabitInsights } from '../services/aiService'; // Phase 18
 import { useTheme } from '../context/ThemeContext';
 import {
   Target,
@@ -23,6 +24,8 @@ import {
   BarChart3,
   PieChart as PieIcon,
   Star,
+  Sparkles,
+  Loader2,
 } from 'lucide-react';
 
 // Phase 07: fixed categorical order, validated for CVD-safety with
@@ -150,6 +153,12 @@ const Dashboard = () => {
   const [overviewLoading, setOverviewLoading] = useState(true);
   const [year, setYear] = useState(currentYear);
 
+  // Phase 18: reading-habits AI insight — fetched on click, not on page
+  // load, so just opening the Dashboard never spends AI quota.
+  const [habitInsight, setHabitInsight] = useState(null);
+  const [habitLoading, setHabitLoading] = useState(false);
+  const [habitError, setHabitError] = useState('');
+
   const fetchGoals = useCallback(async () => {
     setGoalsLoading(true);
     try {
@@ -179,6 +188,31 @@ const Dashboard = () => {
   useEffect(() => {
     fetchOverview();
   }, [fetchOverview]);
+
+  // Stale insight for a different year shouldn't linger once the year changes
+  useEffect(() => {
+    setHabitInsight(null);
+    setHabitError('');
+  }, [year]);
+
+  const handleGetInsight = async () => {
+    setHabitLoading(true);
+    setHabitError('');
+    try {
+      const { data } = await getHabitInsights(year);
+      setHabitInsight(data);
+    } catch (err) {
+      if (err.response?.status === 402) {
+        setHabitError("You've used all your free AI calls this month. Upgrade to Library Pro.");
+      } else if (err.response?.status === 503) {
+        setHabitError('AI features are not configured on this server yet.');
+      } else {
+        setHabitError('Could not generate an insight right now.');
+      }
+    } finally {
+      setHabitLoading(false);
+    }
+  };
 
   const handleCreateGoal = async (e) => {
     e.preventDefault();
@@ -355,6 +389,36 @@ const Dashboard = () => {
             </option>
           ))}
         </select>
+      </div>
+
+      {/* Phase 18: AI habit insight — plain-language read on the same numbers below */}
+      <div className="mb-6 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 border border-purple-200 dark:border-purple-800 rounded-xl p-4">
+        {!habitInsight && !habitLoading && (
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <p className="text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2">
+              <Sparkles size={16} className="text-purple-500" />
+              Get a plain-language read on your {year} reading habits.
+            </p>
+            <button
+              onClick={handleGetInsight}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-600 text-white text-xs font-semibold hover:bg-purple-700"
+            >
+              <Sparkles size={13} /> Get My Insight
+            </button>
+          </div>
+        )}
+        {habitLoading && (
+          <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+            <Loader2 size={15} className="animate-spin" /> Thinking…
+          </p>
+        )}
+        {habitError && <p className="text-sm text-red-600 dark:text-red-400">{habitError}</p>}
+        {habitInsight && (
+          <p className="text-sm text-gray-700 dark:text-gray-200 flex items-start gap-2">
+            <Sparkles size={16} className="text-purple-500 flex-shrink-0 mt-0.5" />
+            {habitInsight.insight}
+          </p>
+        )}
       </div>
 
       {overviewLoading ? (

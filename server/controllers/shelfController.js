@@ -1,5 +1,6 @@
 import Shelf from '../models/Shelf.js';
 import Book from '../models/Book.js';
+import Sentry from '../config/sentry.js'; // Phase 17
 
 // @desc    List the current user's shelves (with book count)
 // @route   GET /api/shelves
@@ -9,6 +10,7 @@ export const getShelves = async (req, res) => {
     const shelves = await Shelf.find({ user: req.user.id }).sort({ createdAt: -1 });
     res.json(shelves);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -25,6 +27,7 @@ export const getShelf = async (req, res) => {
     }
     res.json(shelf);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -40,6 +43,7 @@ export const createShelf = async (req, res) => {
     if (error.code === 11000) {
       return res.status(409).json({ message: 'You already have a shelf with this name.' });
     }
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -62,6 +66,7 @@ export const renameShelf = async (req, res) => {
     if (error.code === 11000) {
       return res.status(409).json({ message: 'You already have a shelf with this name.' });
     }
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -80,6 +85,7 @@ export const deleteShelf = async (req, res) => {
     await shelf.deleteOne();
     res.json({ message: 'Shelf removed.' });
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -108,6 +114,7 @@ export const addBookToShelf = async (req, res) => {
 
     res.json(shelf);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -127,6 +134,7 @@ export const removeBookFromShelf = async (req, res) => {
     await shelf.save();
     res.json(shelf);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };

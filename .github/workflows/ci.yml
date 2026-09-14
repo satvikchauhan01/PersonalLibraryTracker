@@ -1,0 +1,74 @@
+name: CI
+
+# Phase 16: the gate a branch-protection rule on `main` should require (see
+# repo Settings → Branches once this has run at least once) — lint, then
+# test, then build, for both the server and the client, so a broken build or
+# a failing test (including the Phase 14 suite) blocks a merge instead of
+# reaching main quietly.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  server:
+    name: Server — lint & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install
+        working-directory: server
+        run: npm ci
+
+      - name: Lint
+        working-directory: server
+        run: npm run lint
+
+      - name: Test
+        working-directory: server
+        # Phase 14's vitest suite — mongodb-memory-server needs no external
+        # DB, so this runs the same way here as it does locally.
+        run: npm test
+
+  client:
+    name: Client — lint, test & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install
+        working-directory: client
+        run: npm ci
+
+      - name: Lint
+        working-directory: client
+        run: npx eslint --max-warnings=0 src
+
+      - name: Test
+        working-directory: client
+        # GitHub-hosted runners already set CI=true, which makes
+        # react-scripts test run once and exit instead of watch mode;
+        # --watchAll=false is belt-and-suspenders for that.
+        run: npm test -- --watchAll=false
+
+      - name: Build
+        working-directory: client
+        run: npm run build
+        env:
+          # Baked into the static bundle — doesn't need to be a real,
+          # reachable URL for a build-only check, just present.
+          REACT_APP_API_URL: http://localhost:5001/api

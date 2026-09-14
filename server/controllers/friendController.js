@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import FriendRequest from '../models/FriendRequest.js';
 import { getIO, isUserOnline } from '../socket/index.js';
+import Sentry from '../config/sentry.js'; // Phase 17
 
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -58,6 +59,7 @@ export const searchUsers = async (req, res) => {
 
     res.json(results);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -115,6 +117,7 @@ export const sendFriendRequest = async (req, res) => {
 
     res.status(201).json(request);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -148,6 +151,7 @@ export const acceptFriendRequest = async (req, res) => {
 
     res.json({ message: 'Friend request accepted.' });
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -167,6 +171,7 @@ export const declineFriendRequest = async (req, res) => {
     await request.save();
     res.json({ message: 'Friend request declined.' });
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -188,6 +193,7 @@ export const getPendingRequests = async (req, res) => {
     ]);
     res.json({ incoming, outgoing });
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -207,6 +213,7 @@ export const getFriends = async (req, res) => {
     }));
     res.json(friends);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -229,6 +236,7 @@ export const unfriend = async (req, res) => {
     });
     res.json({ message: 'Unfriended.' });
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };

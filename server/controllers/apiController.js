@@ -1,4 +1,5 @@
 import fetch from 'node-fetch';
+import Sentry from '../config/sentry.js'; // Phase 17
 
 const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes?q=';
 const GEMINI_MODEL = 'gemini-3.6-flash';
@@ -21,6 +22,7 @@ const searchOpenLibrary = async (q) => {
       author: doc.author_name ? doc.author_name.join(', ') : 'Unknown Author',
       genre: doc.subject ? doc.subject[0] : 'General',
       coverUrl: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : '',
+      description: '', // Open Library's search endpoint doesn't return a blurb
     }));
   } catch (err) {
     console.error('Open Library fallback error:', err.message);
@@ -60,6 +62,7 @@ export const searchGoogleBooks = async (req, res) => {
           coverUrl: info.imageLinks
             ? info.imageLinks.thumbnail || info.imageLinks.smallThumbnail
             : '',
+          description: info.description || '', // Phase 18: feeds the optional description field on add
         };
       });
     } else {
@@ -80,6 +83,7 @@ export const searchGoogleBooks = async (req, res) => {
       res.json(fallbackResults);
     } catch (fallbackError) {
       console.error('Open Library fallback also failed:', fallbackError.message);
+      Sentry.captureException(fallbackError); // Phase 17
       res.status(500).json({ message: 'Error searching for books' });
     }
   }
@@ -117,6 +121,7 @@ export const getBookByISBN = async (req, res) => {
             ? info.imageLinks.thumbnail || info.imageLinks.smallThumbnail || ''
             : '',
           isbn: cleanIsbn,
+          description: info.description || '', // Phase 18
         });
       }
     }
@@ -156,6 +161,12 @@ export const getBookByISBN = async (req, res) => {
         genre: olData.subjects ? olData.subjects[0] : 'General',
         coverUrl,
         isbn: cleanIsbn,
+        // Phase 18: Open Library's description is either a plain string or
+        // a { type, value } object depending on the edition — normalize both.
+        description:
+          typeof olData.description === 'string'
+            ? olData.description
+            : olData.description?.value || '',
       });
     }
 
@@ -163,6 +174,7 @@ export const getBookByISBN = async (req, res) => {
     return res.status(404).json({ message: `No book found for ISBN ${isbn}` });
   } catch (error) {
     console.error('ISBN lookup error:', error.message);
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: 'Error looking up ISBN' });
   }
 };
@@ -234,6 +246,7 @@ export const getGeminiInsights = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching Gemini insights:', error);
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };

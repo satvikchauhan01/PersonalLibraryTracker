@@ -1,6 +1,7 @@
 import ActivityEvent from '../models/ActivityEvent.js';
 import User from '../models/User.js';
 import { getIO } from '../socket/index.js';
+import Sentry from '../config/sentry.js'; // Phase 17
 
 // Records an activity event and fans it out live to the actor's friends'
 // `user:{id}` rooms. Called from bookController/readingController/
@@ -64,6 +65,7 @@ export const getActivityFeed = async (req, res) => {
 
     res.json({ events, page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) });
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };

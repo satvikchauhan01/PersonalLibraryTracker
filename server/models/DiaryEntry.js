@@ -55,6 +55,20 @@ const diaryEntrySchema = mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Phase 18: "ask your diary" RAG — embedding of title+content, computed
+    // lazily the first time askDiary needs it (see aiController.js) and
+    // invalidated (re-embedded) whenever the entry is saved again.
+    // select:false for the same reason as Book.embedding — not client-facing.
+    embedding: {
+      type: [Number],
+      default: undefined,
+      select: false,
+    },
+    embeddingUpdatedAt: {
+      type: Date,
+      default: null,
+      select: false,
+    },
   },
   {
     timestamps: true,

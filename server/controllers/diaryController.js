@@ -3,6 +3,7 @@ import User from '../models/User.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import fetch from 'node-fetch';
+import Sentry from '../config/sentry.js'; // Phase 17
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PIN / LOCK MANAGEMENT
@@ -20,6 +21,7 @@ export const getPinStatus = async (req, res) => {
     });
   } catch (error) {
     console.error('getPinStatus error:', error);
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: 'Server error.' });
   }
 };
@@ -44,6 +46,7 @@ export const setupPin = async (req, res) => {
     res.json({ message: 'Diary PIN set successfully. Lock is now enabled.' });
   } catch (error) {
     console.error('setupPin error:', error);
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: 'Server error.' });
   }
 };
@@ -75,6 +78,7 @@ export const verifyPin = async (req, res) => {
     res.json({ diaryToken, message: 'Diary unlocked successfully.' });
   } catch (error) {
     console.error('verifyPin error:', error);
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: 'Server error.' });
   }
 };
@@ -100,6 +104,7 @@ export const disablePin = async (req, res) => {
     res.json({ message: 'Diary lock disabled.' });
   } catch (error) {
     console.error('disablePin error:', error);
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: 'Server error.' });
   }
 };
@@ -119,6 +124,7 @@ export const getEntries = async (req, res) => {
     res.json(entries);
   } catch (error) {
     console.error('getEntries error:', error);
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: 'Server error.' });
   }
 };
@@ -139,6 +145,7 @@ export const getEntryByDate = async (req, res) => {
     res.json(entry);
   } catch (error) {
     console.error('getEntryByDate error:', error);
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: 'Server error.' });
   }
 };
@@ -173,6 +180,12 @@ export const saveEntry = async (req, res) => {
           images,
           wordCount,
         },
+        // Phase 18: title/content are exactly what askDiary embeds — any
+        // save (this route upserts, so this covers both new entries and
+        // edits) invalidates the cached embedding so it's recomputed
+        // against the current text next time, instead of silently ranking
+        // against what the entry used to say.
+        $unset: { embedding: '', embeddingUpdatedAt: '' },
       },
       { upsert: true, new: true, runValidators: true }
     );
@@ -180,6 +193,7 @@ export const saveEntry = async (req, res) => {
     res.json(entry);
   } catch (error) {
     console.error('saveEntry error:', error);
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: 'Server error saving entry.' });
   }
 };
@@ -199,6 +213,7 @@ export const deleteEntry = async (req, res) => {
     res.json({ message: 'Entry deleted.' });
   } catch (error) {
     console.error('deleteEntry error:', error);
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: 'Server error.' });
   }
 };
@@ -259,6 +274,7 @@ export const getDiaryStats = async (req, res) => {
     res.json({ totalEntries, totalWords, streak, moodCounts });
   } catch (error) {
     console.error('getDiaryStats error:', error);
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: 'Server error.' });
   }
 };
@@ -315,6 +331,7 @@ It should be 1-2 sentences, conversational, and personal in tone. Do not add num
     res.json({ prompt: text.trim() });
   } catch (error) {
     console.error('getWritingPrompt error:', error);
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: 'Failed to get writing prompt.' });
   }
 };

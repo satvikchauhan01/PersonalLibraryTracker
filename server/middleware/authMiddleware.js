@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import Sentry from '../config/sentry.js'; // Phase 17
 
 const protect = async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -26,6 +27,12 @@ const protect = async (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ message: 'Not authorized, user not found' });
     }
+
+    // Phase 17: every Sentry capture for the rest of this request — whether
+    // an explicit controller-level captureException or the Express error
+    // handler catching something further down the chain — now carries
+    // "the offending user id" without each call site needing to attach it itself.
+    Sentry.setUser({ id: req.user._id.toString(), email: req.user.email });
 
     next();
   } catch {

@@ -1,4 +1,5 @@
 import Notification from '../models/Notification.js';
+import Sentry from '../config/sentry.js'; // Phase 17
 
 // @desc    Paginated notification inbox, newest first, plus an unread count
 //          for the bell badge (so the client doesn't need a second request).
@@ -29,6 +30,7 @@ export const getNotifications = async (req, res) => {
       unreadCount,
     });
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -48,6 +50,7 @@ export const markNotificationRead = async (req, res) => {
     await notification.save();
     res.json(notification);
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };
@@ -60,6 +63,7 @@ export const markAllNotificationsRead = async (req, res) => {
     await Notification.updateMany({ user: req.user._id, read: false }, { $set: { read: true } });
     res.json({ message: 'All notifications marked as read.' });
   } catch (error) {
+    Sentry.captureException(error); // Phase 17
     res.status(500).json({ message: error.message });
   }
 };

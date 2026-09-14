@@ -39,6 +39,13 @@ export const createBookSchema = z.object({
   totalPages: z.number().int().min(0).optional(),
   startDate: dateString,
   finishDate: dateString,
+  // Phase 18: optional blurb — richer input for the "similar books" embedding
+  // and spoiler-light summary than title/author/genre alone.
+  description: z
+    .string()
+    .trim()
+    .max(2000, 'Description must be at most 2000 characters')
+    .optional(),
 });
 
 export const updateBookSchema = z.object({
@@ -53,6 +60,11 @@ export const updateBookSchema = z.object({
   totalPages: z.number().int().min(0).optional(),
   startDate: dateString,
   finishDate: dateString,
+  description: z
+    .string()
+    .trim()
+    .max(2000, 'Description must be at most 2000 characters')
+    .optional(),
 });
 
 // Phase 13: one row of a bulk import. Deliberately more lenient than
