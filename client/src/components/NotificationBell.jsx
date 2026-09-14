@@ -83,11 +83,12 @@ const NotificationBell = () => {
       }
 
       const id = Date.now();
+      const fromName = payload.from?.name || 'Someone'; // same "no name on this account" case as Friends.jsx
       const message =
         payload.type === 'friend_request'
-          ? `${payload.from.name} sent you a friend request`
+          ? `${fromName} sent you a friend request`
           : payload.type === 'friend_accepted'
-            ? `${payload.from.name} accepted your friend request`
+            ? `${fromName} accepted your friend request`
             : payload.message || 'New notification';
       setToasts((prev) => [...prev, { id, message }]);
       setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000);
@@ -177,7 +178,7 @@ const NotificationBell = () => {
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                      {req.from.name}
+                      {req.from.name || 'Unnamed user'}
                     </p>
                     <p className="text-xs text-gray-400 truncate">{req.from.email}</p>
                   </div>

@@ -105,7 +105,12 @@ export const getConversations = async (req, res) => {
       }
       if (a.lastMessage) return -1;
       if (b.lastMessage) return 1;
-      return a.friend.name.localeCompare(b.friend.name);
+      // Bug fix: an account created before Phase 01 added registration
+      // validation can have a missing `name` field — localeCompare on
+      // undefined 500'd this entire endpoint for that user's every friend,
+      // not just the nameless one. Same underlying data case as Friends.jsx's
+      // crash on the client.
+      return (a.friend.name || '').localeCompare(b.friend.name || '');
     });
 
     res.json(conversations);

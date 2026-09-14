@@ -153,6 +153,50 @@ describe('Messages — sending, history, read receipts, conversation list', () =
 // would resurrect an "unread" count once the client navigated away and
 // refetched, even though the message had already been seen. POST .../read
 // is what the client now calls in that case instead.
+// Regression: a real production crash. GET /messages/conversations sorts
+// never-messaged friends alphabetically by name — an account with an empty
+// `name` (possible for one created before Phase 01 added registration
+// validation; Mongoose's own `required` validator only rejects
+// null/undefined, not '') made `.localeCompare` 500 the whole endpoint for
+// every one of that account's friends. The matching frontend crash
+// (`f.name.charAt(0)` in Friends.jsx) is fixed the same way, client-side.
+describe('Messages — conversations list tolerates a friend with no name', () => {
+  it('does not 500 when a never-messaged friend has no name field at all', async () => {
+    const alice = await registerAndGetToken('alice9@example.com');
+    const nameless = await registerAndGetToken('nameless9@example.com');
+    // The real production bug is `name` being *undefined* (the field is
+    // missing from the stored document entirely, not just an empty string —
+    // '' supports .charAt()/.localeCompare() fine, only undefined/null
+    // throw, and the actual crash said "reading 'charAt' of undefined").
+    // updateOne skips schema validators by default, so $unset here
+    // reproduces a pre-Phase-01 account without needing to bypass the Zod
+    // layer at the HTTP level.
+    await User.updateOne({ _id: nameless.id }, { $unset: { name: 1 } });
+    await makeFriends(alice.id, nameless.id);
+
+    const res = await request(app)
+      .get('/api/messages/conversations')
+      .set('Authorization', `Bearer ${alice.token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.find((c) => c.friend._id === nameless.id)).toBeTruthy();
+  });
+
+  it('sorts a nameless friend alongside named ones without throwing', async () => {
+    const alice = await registerAndGetToken('alice10@example.com');
+    const zed = await registerAndGetToken('zed10@example.com');
+    const nameless = await registerAndGetToken('nameless10@example.com');
+    await User.updateOne({ _id: nameless.id }, { $unset: { name: 1 } });
+    await makeFriends(alice.id, zed.id);
+    await makeFriends(alice.id, nameless.id);
+
+    const res = await request(app)
+      .get('/api/messages/conversations')
+      .set('Authorization', `Bearer ${alice.token}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(2);
+  });
+});
+
 describe('Messages — POST /:friendId/read', () => {
   it('marks unread messages read without needing to fetch them', async () => {
     const alice = await registerAndGetToken('alice7@example.com');

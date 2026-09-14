@@ -144,7 +144,7 @@ const Friends = () => {
               <div key={u._id} className="flex items-center justify-between px-4 py-3">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                    {u.name}
+                    {u.name || 'Unnamed user'}
                   </p>
                   <p className="text-xs text-gray-400 truncate">{u.email}</p>
                 </div>
@@ -200,7 +200,11 @@ const Friends = () => {
             >
               <div className="relative flex-shrink-0">
                 <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 flex items-center justify-center font-bold">
-                  {f.name.charAt(0).toUpperCase()}
+                  {/* Bug fix: crashed the whole page (uncaught TypeError, caught only by
+                      the ErrorBoundary) for any friend whose `name` is empty — possible for
+                      an account created before Phase 01 added registration validation.
+                      Same defensive fallback Messages.jsx's Avatar already uses. */}
+                  {(f.name || '?').charAt(0).toUpperCase()}
                 </div>
                 <span className="absolute -bottom-0.5 -right-0.5">
                   <PresenceDot isOnline={f.isOnline} />
@@ -208,7 +212,7 @@ const Friends = () => {
               </div>
               <div className="min-w-0 flex-grow">
                 <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                  {f.name}
+                  {f.name || 'Unnamed user'}
                 </p>
                 <p className="text-xs text-gray-400">{f.isOnline ? 'Online' : 'Offline'}</p>
               </div>

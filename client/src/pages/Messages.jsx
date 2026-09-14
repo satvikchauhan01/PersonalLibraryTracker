@@ -335,7 +335,7 @@ const Messages = () => {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                      {c.friend.name}
+                      {c.friend.name || 'Unnamed user'}
                     </p>
                     {c.lastMessage && (
                       <span className="text-[11px] text-gray-400 flex-shrink-0">
@@ -379,7 +379,7 @@ const Messages = () => {
                 <Avatar name={selectedFriend.name} isOnline={selectedFriend.isOnline} />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
-                    {selectedFriend.name}
+                    {selectedFriend.name || 'Unnamed user'}
                   </p>
                   <p className="text-xs text-gray-400">
                     {friendTyping ? (
