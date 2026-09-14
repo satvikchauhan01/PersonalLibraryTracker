@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   BookOpen,
@@ -9,6 +9,7 @@ import {
   Library,
   Target,
   Users,
+  MessageCircle,
   CreditCard,
   Sparkles,
   Sun,
@@ -18,7 +19,9 @@ import {
 } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useSocket } from '../context/SocketContext';
 import { getPinStatus } from '../services/diaryService';
+import { getConversations } from '../services/messageService';
 import NotificationBell from './NotificationBell';
 
 const NAV_ITEMS = [
@@ -26,6 +29,7 @@ const NAV_ITEMS = [
   { to: '/shelves', label: 'Shelves', icon: Library },
   { to: '/dashboard', label: 'Dashboard', icon: Target },
   { to: '/friends', label: 'Friends', icon: Users },
+  { to: '/messages', label: 'Messages', icon: MessageCircle, badge: 'chat' },
   { to: '/diary', label: 'My Diary', icon: PenLine, lockable: true },
   { to: '/profile', label: 'My Profile', icon: User },
   { to: '/billing', label: 'Billing', icon: CreditCard },
@@ -34,7 +38,9 @@ const NAV_ITEMS = [
 const Navbar = () => {
   const { user } = useContext(AuthContext);
   const { theme, toggleTheme } = useTheme();
+  const { socket } = useSocket();
   const [diaryLocked, setDiaryLocked] = useState(false);
+  const [chatUnread, setChatUnread] = useState(0);
   // Phase 13 responsive fix: the 7-item nav had no mobile treatment at all —
   // it simply overflowed the viewport width, forcing the entire page to
   // scroll horizontally on any screen narrower than ~1000px. Below `md:` the
@@ -47,6 +53,31 @@ const Navbar = () => {
       .then(({ data }) => setDiaryLocked(data.diaryLockEnabled))
       .catch(() => {});
   }, [user]);
+
+  // Chat: total unread count across every conversation, for the nav badge.
+  // Refetched (not incrementally tracked) on any live chat event — same
+  // "just refetch, don't hand-roll incremental state" approach NotificationBell
+  // already uses for its own badge.
+  const fetchChatUnread = useCallback(() => {
+    if (!user) return;
+    getConversations()
+      .then(({ data }) => setChatUnread(data.reduce((sum, c) => sum + c.unreadCount, 0)))
+      .catch(() => {});
+  }, [user]);
+
+  useEffect(() => {
+    fetchChatUnread();
+  }, [fetchChatUnread]);
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.on('chat:new', fetchChatUnread);
+    socket.on('chat:read', fetchChatUnread);
+    return () => {
+      socket.off('chat:new', fetchChatUnread);
+      socket.off('chat:read', fetchChatUnread);
+    };
+  }, [socket, fetchChatUnread]);
 
   // Close the mobile panel on every route change (NavLink click)
   useEffect(() => {
@@ -77,12 +108,17 @@ const Navbar = () => {
             </h1>
             {/* Full horizontal nav — md and up only */}
             <nav className="hidden md:flex flex-wrap gap-x-1 gap-y-1 ml-4">
-              {NAV_ITEMS.map(({ to, label, icon: Icon, lockable }) => (
+              {NAV_ITEMS.map(({ to, label, icon: Icon, lockable, badge }) => (
                 <NavLink key={to} to={to} className={getNavLinkClass}>
                   <Icon size={16} className="inline mr-1" />
                   {label}
                   {lockable && diaryLocked && (
                     <Lock size={11} className="inline ml-1 text-indigo-400" />
+                  )}
+                  {badge === 'chat' && chatUnread > 0 && (
+                    <span className="ml-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                      {chatUnread > 9 ? '9+' : chatUnread}
+                    </span>
                   )}
                 </NavLink>
               ))}
@@ -125,7 +161,7 @@ const Navbar = () => {
         {/* Mobile nav panel */}
         {mobileOpen && (
           <nav className="md:hidden pb-4 flex flex-col gap-1">
-            {NAV_ITEMS.map(({ to, label, icon: Icon, lockable }) => (
+            {NAV_ITEMS.map(({ to, label, icon: Icon, lockable, badge }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -136,6 +172,11 @@ const Navbar = () => {
                 {label}
                 {lockable && diaryLocked && (
                   <Lock size={11} className="inline ml-1.5 text-indigo-400" />
+                )}
+                {badge === 'chat' && chatUnread > 0 && (
+                  <span className="ml-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {chatUnread > 9 ? '9+' : chatUnread}
+                  </span>
                 )}
               </NavLink>
             ))}

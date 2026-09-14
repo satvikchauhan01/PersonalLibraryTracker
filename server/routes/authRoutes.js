@@ -26,7 +26,9 @@ import {
 
 const router = express.Router();
 
-// Stricter limiter on brute-forceable endpoints
+// Stricter limiter on brute-forceable endpoints — a password/credential
+// guess is what this defends against, so it only belongs on routes an
+// attacker without valid credentials can actually hammer.
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,
@@ -34,6 +36,30 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   message: { message: 'Too many attempts. Please try again later.' },
   skip: () => process.env.NODE_ENV === 'test', // Phase 14: unmetered in the test suite
+});
+
+// Bug fix: /refresh used to share authLimiter's 10/15min budget with
+// /register + /login. /refresh isn't brute-forceable the same way — it's
+// gated by possession of an unguessable httpOnly cookie, not a guessable
+// credential — but it fires on every page load (AuthContext's silent
+// bootstrap refresh) AND every access-token expiry (api.js's response
+// interceptor), so completely normal use (a few reloads, a couple of
+// expired-token refreshes, testing with a second account — exactly what
+// trying out the friends feature involves) burns through 10 requests in
+// minutes. Once exhausted, the next silent refresh 429s, and api.js's
+// interceptor used to treat ANY refresh failure as "log the user out" —
+// so a legitimately-still-logged-in user would get silently bounced to
+// /auth with no explanation, anywhere in the app. Given its own, much
+// higher ceiling here (still bounds abuse of a stolen cookie, just doesn't
+// trip over ordinary usage) — see api.js's matching fix to stop treating a
+// 429 here as a hard logout.
+const refreshLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many attempts. Please try again later.' },
+  skip: () => process.env.NODE_ENV === 'test',
 });
 
 /**
@@ -116,8 +142,9 @@ router.post('/login', authLimiter, validate(loginSchema), loginUser);
  *               type: object
  *               properties: { accessToken: { type: string } }
  *       401: { description: No/invalid/expired/reused refresh token }
+ *       429: { description: Too many attempts (100 / 15 min — much higher than login/register, since this fires on every page load) }
  */
-router.post('/refresh', authLimiter, refreshToken);
+router.post('/refresh', refreshLimiter, refreshToken);
 
 /**
  * @swagger

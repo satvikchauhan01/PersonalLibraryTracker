@@ -21,6 +21,7 @@ import goalRoutes from './routes/goalRoutes.js'; // Phase 07
 import analyticsRoutes from './routes/analyticsRoutes.js'; // Phase 07
 import friendRoutes from './routes/friendRoutes.js'; // Phase 08
 import activityRoutes from './routes/activityRoutes.js'; // Phase 08
+import messageRoutes from './routes/messageRoutes.js'; // Chat
 import paymentRoutes from './routes/paymentRoutes.js'; // Phase 09
 import { webhook } from './controllers/paymentController.js'; // Phase 09
 import uploadRoutes from './routes/uploadRoutes.js'; // Phase 10
@@ -116,6 +117,7 @@ app.use('/api/goals', goalRoutes); // Phase 07
 app.use('/api/analytics', analyticsRoutes); // Phase 07
 app.use('/api/friends', friendRoutes); // Phase 08
 app.use('/api/activity', activityRoutes); // Phase 08
+app.use('/api/messages', messageRoutes); // Chat
 app.use('/api/payments', paymentRoutes); // Phase 09 (webhook is mounted separately above)
 app.use('/api/upload', uploadRoutes); // Phase 10
 app.use('/api/notifications', notificationRoutes); // Phase 11
@@ -155,12 +157,10 @@ app.get('/', (req, res) => {
 app.get('/health', (req, res) => {
   // readyState: 0 disconnected, 1 connected, 2 connecting, 3 disconnecting
   const mongoConnected = mongoose.connection.readyState === 1;
-  res
-    .status(mongoConnected ? 200 : 503)
-    .json({
-      status: mongoConnected ? 'ok' : 'degraded',
-      mongo: mongoConnected ? 'connected' : 'disconnected',
-    });
+  res.status(mongoConnected ? 200 : 503).json({
+    status: mongoConnected ? 'ok' : 'degraded',
+    mongo: mongoConnected ? 'connected' : 'disconnected',
+  });
 });
 
 // Phase 17: registered after every route but before our own errorHandler —

@@ -60,6 +60,29 @@ export const initSocket = (httpServer, allowedOrigins) => {
       broadcastPresence(io, userId, true).catch(() => {});
     }
 
+    // Chat: cache this connection's friend set once (not re-fetched per
+    // keystroke) so `typing` events can be relay-checked against it — a
+    // client shouldn't be able to make a typing indicator appear for an
+    // arbitrary stranger's `to`, only for an actual friend. A mid-session
+    // friendship change won't be reflected until the next reconnect, which
+    // is an acceptable staleness window for an ephemeral, no-persistence signal.
+    let friendIds = new Set();
+    try {
+      const me = await User.findById(userId).select('friends');
+      friendIds = new Set((me?.friends || []).map(String));
+    } catch {
+      // If this lookup fails, typing indicators just silently no-op below —
+      // not worth failing the whole connection over.
+    }
+
+    // Chat: purely ephemeral (no DB write) typing indicator, relayed
+    // straight to the other person's room. `isTyping` lets one event type
+    // cover both "started typing" and "stopped typing".
+    socket.on('chat:typing', ({ to, isTyping }) => {
+      if (!to || !friendIds.has(String(to))) return;
+      socket.to(`user:${to}`).emit('chat:typing', { from: userId, isTyping: !!isTyping });
+    });
+
     socket.on('disconnect', () => {
       const sockets = onlineUsers.get(userId);
       if (!sockets) return;

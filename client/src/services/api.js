@@ -66,8 +66,18 @@ api.interceptors.response.use(
       return api(originalRequest);
     } catch (refreshError) {
       flushQueue(refreshError, null);
-      setAccessToken(null);
-      window.location.href = '/auth';
+      // Bug fix: only a definitive 401 here means the session is actually
+      // invalid (the refresh cookie is missing/expired/revoked/reused) —
+      // that's the one case a hard logout+redirect is correct. Any other
+      // failure (429 rate-limited, a network blip, a 5xx) is transient and
+      // says nothing about whether the session is still good, so don't wipe
+      // the in-memory access token or force-navigate away from whatever the
+      // user was doing for it — just fail this one request and let the next
+      // natural retry (or the next 401) try again once the condition clears.
+      if (refreshError.response?.status === 401) {
+        setAccessToken(null);
+        window.location.href = '/auth';
+      }
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

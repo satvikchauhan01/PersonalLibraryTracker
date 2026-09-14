@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Users, Search, UserPlus, UserCheck, Clock, UserMinus } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Users, Search, UserPlus, UserCheck, Clock, UserMinus, MessageCircle } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
 import PresenceDot from '../components/PresenceDot';
 import {
@@ -211,6 +212,13 @@ const Friends = () => {
                 </p>
                 <p className="text-xs text-gray-400">{f.isOnline ? 'Online' : 'Offline'}</p>
               </div>
+              <Link
+                to={`/messages?friend=${f._id}`}
+                className="flex-shrink-0 text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400"
+                title="Message"
+              >
+                <MessageCircle size={16} />
+              </Link>
               <button
                 onClick={() => handleUnfriend(f._id)}
                 className="flex-shrink-0 text-gray-300 hover:text-red-500"

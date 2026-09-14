@@ -7,6 +7,7 @@ import Diary from './pages/Diary';
 import Shelves from './pages/Shelves';
 import Dashboard from './pages/Dashboard';
 import Friends from './pages/Friends';
+import Messages from './pages/Messages';
 import Billing from './pages/Billing';
 import ResetPassword from './pages/ResetPassword'; // Phase 12
 import AuthScreen from './components/AuthScreen';
@@ -35,6 +36,7 @@ function App() {
               <Route path="/shelves" element={<Shelves />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/friends" element={<Friends />} />
+              <Route path="/messages" element={<Messages />} />
               <Route path="/billing" element={<Billing />} />
               <Route path="/diary" element={<Diary />} />
               <Route path="/profile" element={<Profile />} />
