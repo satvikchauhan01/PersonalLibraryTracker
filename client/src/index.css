@@ -1,5 +1,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+/* Neumorphic redesign ("Tactile Bibliotheca") headings */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -13,5 +15,123 @@ body {
    this covers the bit of body Tailwind's dark: variants don't reach. */
 .dark body {
   background-color: #111827; /* gray-900 */
+}
+
+/* ── Neumorphic redesign design tokens ──────────────────────────────────────
+   Light values are Stitch's own "Tactile Bibliotheca" design system, taken
+   verbatim from the generated screens. Dark values are our own — Stitch only
+   produced a light theme, so this dark palette/shadow set was designed by
+   hand, following the same M3-style token roles and the doc's own "Base
+   Material Unity" principle (elevation comes from shadow alone, every
+   surface level shares one base hue). Consumed via tailwind.config.js's
+   colors/boxShadow `var(--neu-*)` entries, so components just write
+   `bg-surface`/`shadow-neu-lg`/etc. once and both themes fall out of the
+   existing `.dark` toggle for free. */
+:root {
+  --neu-surface: #f6faff;
+  --neu-surface-dim: #d6dadf;
+  --neu-surface-bright: #f6faff;
+  --neu-surface-container-lowest: #ffffff;
+  --neu-surface-container-low: #f0f4f9;
+  --neu-surface-container: #eaeef3;
+  --neu-surface-container-high: #e4e8ed;
+  --neu-surface-container-highest: #dfe3e8;
+  --neu-on-surface: #171c20;
+  --neu-on-surface-variant: #464554;
+  --neu-inverse-surface: #2c3135;
+  --neu-inverse-on-surface: #edf1f6;
+  --neu-outline: #767586;
+  --neu-outline-variant: #c7c4d7;
+  --neu-primary: #4648d4;
+  --neu-on-primary: #ffffff;
+  --neu-primary-container: #6063ee;
+  --neu-on-primary-container: #fffbff;
+  --neu-inverse-primary: #c0c1ff;
+  --neu-secondary: #376758;
+  --neu-on-secondary: #ffffff;
+  --neu-secondary-container: #b9eeda;
+  --neu-on-secondary-container: #3d6d5e;
+  --neu-tertiary: #6b38d4;
+  --neu-on-tertiary: #ffffff;
+  --neu-tertiary-container: #8455ef;
+  --neu-on-tertiary-container: #fffbff;
+  --neu-error: #ba1a1a;
+  --neu-on-error: #ffffff;
+  --neu-error-container: #ffdad6;
+  --neu-on-error-container: #93000a;
+  --neu-background: #f6faff;
+  --neu-on-background: #171c20;
+
+  /* Extruded (convex) surfaces: soft white highlight top-left, diffuse
+     cool-gray shadow bottom-right — a light source from the upper-left. */
+  --neu-shadow-xs: -2px -2px 5px #ffffff, 2px 2px 5px rgba(166, 175, 195, 0.4);
+  --neu-shadow-sm: -3px -3px 6px #ffffff, 3px 3px 6px rgba(166, 175, 195, 0.4);
+  --neu-shadow: -3px -3px 7px #ffffff, 3px 3px 7px rgba(166, 175, 195, 0.4);
+  --neu-shadow-md: -4px -4px 10px #ffffff, 4px 4px 10px rgba(166, 175, 195, 0.5);
+  --neu-shadow-lg: -6px -6px 12px #ffffff, 6px 6px 14px rgba(166, 175, 195, 0.45);
+  --neu-shadow-lg-hover: -8px -8px 16px #ffffff, 8px 8px 18px rgba(166, 175, 195, 0.5);
+  --neu-shadow-xl: -6px -6px 14px #ffffff, 6px 6px 16px rgba(166, 175, 195, 0.45);
+  --neu-shadow-xl-hover: -8px -8px 18px #ffffff, 8px 8px 20px rgba(166, 175, 195, 0.55);
+  /* Debossed (inset) surfaces: pressed controls, inputs, active pills. */
+  --neu-shadow-inset-xs: inset 1px 1px 2px rgba(166, 175, 195, 0.3), inset -1px -1px 2px #ffffff;
+  --neu-shadow-inset-sm: inset 2px 2px 4px rgba(166, 175, 195, 0.35), inset -2px -2px 4px #ffffff;
+  --neu-shadow-inset: inset 3px 3px 6px rgba(166, 175, 195, 0.45), inset -3px -3px 6px #ffffff;
+  --neu-shadow-inset-lg: inset 4px 4px 8px rgba(166, 175, 195, 0.45), inset -4px -4px 8px #ffffff;
+  --neu-shadow-inset-focus: inset 4px 4px 8px rgba(166, 175, 195, 0.5), inset -4px -4px 8px #ffffff,
+    0 0 0 2px rgba(70, 72, 212, 0.3);
+}
+
+.dark {
+  --neu-surface: #15171d;
+  --neu-surface-dim: #101217;
+  --neu-surface-bright: #1d2029;
+  --neu-surface-container-lowest: #0c0d11;
+  --neu-surface-container-low: #191c23;
+  --neu-surface-container: #1e212a;
+  --neu-surface-container-high: #282b35;
+  --neu-surface-container-highest: #33363f;
+  --neu-on-surface: #e3e2e6;
+  --neu-on-surface-variant: #c5c4d1;
+  --neu-inverse-surface: #e3e2e6;
+  --neu-inverse-on-surface: #2c3135;
+  --neu-outline: #8f8f9d;
+  --neu-outline-variant: #45454f;
+  --neu-primary: #c0c1ff;
+  --neu-on-primary: #131278;
+  --neu-primary-container: #2f2ebe;
+  --neu-on-primary-container: #e1e0ff;
+  --neu-inverse-primary: #4648d4;
+  --neu-secondary: #9ed1be;
+  --neu-on-secondary: #08372b;
+  --neu-secondary-container: #1d4f41;
+  --neu-on-secondary-container: #b9eeda;
+  --neu-tertiary: #d0bcff;
+  --neu-on-tertiary: #38167a;
+  --neu-tertiary-container: #5516be;
+  --neu-on-tertiary-container: #e9ddff;
+  --neu-error: #ffb4ab;
+  --neu-on-error: #690005;
+  --neu-error-container: #93000a;
+  --neu-on-error-container: #ffdad6;
+  --neu-background: #15171d;
+  --neu-on-background: #e3e2e6;
+
+  /* Same convex/debossed logic, but a dark surface's "light source" is a
+     faint lift (translucent white), not a true highlight, and its shadow is
+     genuinely darker than the surface rather than a tinted gray. */
+  --neu-shadow-xs: -2px -2px 5px rgba(255, 255, 255, 0.045), 2px 2px 5px rgba(0, 0, 0, 0.5);
+  --neu-shadow-sm: -3px -3px 6px rgba(255, 255, 255, 0.045), 3px 3px 6px rgba(0, 0, 0, 0.5);
+  --neu-shadow: -3px -3px 7px rgba(255, 255, 255, 0.045), 3px 3px 7px rgba(0, 0, 0, 0.5);
+  --neu-shadow-md: -4px -4px 10px rgba(255, 255, 255, 0.05), 4px 4px 10px rgba(0, 0, 0, 0.55);
+  --neu-shadow-lg: -6px -6px 12px rgba(255, 255, 255, 0.045), 6px 6px 14px rgba(0, 0, 0, 0.55);
+  --neu-shadow-lg-hover: -8px -8px 16px rgba(255, 255, 255, 0.05), 8px 8px 18px rgba(0, 0, 0, 0.6);
+  --neu-shadow-xl: -6px -6px 14px rgba(255, 255, 255, 0.045), 6px 6px 16px rgba(0, 0, 0, 0.55);
+  --neu-shadow-xl-hover: -8px -8px 18px rgba(255, 255, 255, 0.05), 8px 8px 20px rgba(0, 0, 0, 0.6);
+  --neu-shadow-inset-xs: inset 1px 1px 2px rgba(0, 0, 0, 0.4), inset -1px -1px 2px rgba(255, 255, 255, 0.035);
+  --neu-shadow-inset-sm: inset 2px 2px 4px rgba(0, 0, 0, 0.45), inset -2px -2px 4px rgba(255, 255, 255, 0.04);
+  --neu-shadow-inset: inset 3px 3px 6px rgba(0, 0, 0, 0.5), inset -3px -3px 6px rgba(255, 255, 255, 0.045);
+  --neu-shadow-inset-lg: inset 4px 4px 8px rgba(0, 0, 0, 0.5), inset -4px -4px 8px rgba(255, 255, 255, 0.045);
+  --neu-shadow-inset-focus: inset 4px 4px 8px rgba(0, 0, 0, 0.55), inset -4px -4px 8px rgba(255, 255, 255, 0.05),
+    0 0 0 2px rgba(192, 193, 255, 0.35);
 }
 

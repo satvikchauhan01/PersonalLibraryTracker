@@ -1,12 +1,32 @@
 import React from 'react';
 
-const StatCard = ({ label, value, icon: Icon, color }) => (
-  <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md flex items-center justify-between">
-    <div>
-      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
-      <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
+// Neumorphic redesign ("Tactile Bibliotheca"): extruded convex card, icon in
+// its own small extruded badge, lifts further on hover. `color` tints the
+// icon badge; `valueColor`/`captionColor` default to plain ink but the
+// Stitch mock deliberately colors the "Reading" card's whole stat (value +
+// caption, not just the icon) to make it the visual hero of the row.
+const StatCard = ({
+  label,
+  value,
+  icon: Icon,
+  color,
+  caption,
+  valueColor = 'text-on-surface',
+  captionColor = 'text-on-surface-variant',
+}) => (
+  <div className="bg-surface rounded-neu-xl p-5 shadow-neu-lg hover:shadow-neu-lg-hover transition-all duration-300 flex flex-col justify-between">
+    <div className="flex items-center justify-between mb-3">
+      <p className="text-sm font-medium text-on-surface-variant">{label}</p>
+      <div
+        className={`w-9 h-9 rounded-neu-lg bg-surface shadow-neu-sm flex items-center justify-center ${color}`}
+      >
+        <Icon size={20} />
+      </div>
     </div>
-    <Icon className={`w-8 h-8 ${color} opacity-70`} />
+    <div className="flex items-baseline gap-1.5">
+      <p className={`font-display text-3xl font-bold leading-none ${valueColor}`}>{value}</p>
+      {caption && <span className={`text-xs font-medium ${captionColor}`}>{caption}</span>}
+    </div>
   </div>
 );
 

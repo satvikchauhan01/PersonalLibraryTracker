@@ -4,11 +4,14 @@ import { useSocket } from '../context/SocketContext';
 import { getActivityFeed } from '../services/activityService';
 import Pagination from './Pagination'; // Phase 13
 
+// Neumorphic redesign: event icons now tint an extruded circular badge
+// (bg-surface + shadow-neu-xs) instead of a flat colored-background pill —
+// color restraint means only the primary/secondary/tertiary trio gets used.
 const EVENT_ICON = {
-  book_added: { icon: BookPlus, color: 'text-blue-500 bg-blue-50 dark:bg-blue-950/50' },
-  book_completed: { icon: CheckCircle2, color: 'text-green-500 bg-green-50 dark:bg-green-950/50' },
-  book_rated: { icon: Star, color: 'text-amber-500 bg-amber-50 dark:bg-amber-950/50' },
-  reading_streak: { icon: Flame, color: 'text-orange-500 bg-orange-50 dark:bg-orange-950/50' },
+  book_added: { icon: BookPlus, color: 'text-primary' },
+  book_completed: { icon: CheckCircle2, color: 'text-secondary' },
+  book_rated: { icon: Star, color: 'text-tertiary' },
+  reading_streak: { icon: Flame, color: 'text-tertiary' },
 };
 
 const describeEvent = (event) => {
@@ -73,42 +76,57 @@ const ActivityFeed = () => {
   }, [socket, page]);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-5">
-      <h3 className="font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-4">
-        <Users size={16} className="text-indigo-500" /> Friend Activity
-      </h3>
+    <div className="bg-surface rounded-neu-xl shadow-neu-lg p-5 flex flex-col justify-between">
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-9 h-9 rounded-neu bg-surface shadow-neu-sm flex items-center justify-center text-primary">
+            <Users size={16} />
+          </div>
+          <h3 className="font-display font-bold text-on-surface">Friend Activity</h3>
+        </div>
 
-      {loading ? (
-        <p className="text-sm text-gray-400 text-center py-6">Loading…</p>
-      ) : events.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-6">
-          Nothing yet — add friends to see their reading activity here.
-        </p>
-      ) : (
-        <ul className="space-y-3 max-h-80 overflow-y-auto">
-          {events.map((event) => {
-            const { icon: Icon, color } = EVENT_ICON[event.type] || EVENT_ICON.book_added;
-            return (
-              <li key={event._id} className="flex items-start gap-3">
-                <span className={`flex-shrink-0 p-1.5 rounded-full ${color}`}>
-                  <Icon size={14} />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{describeEvent(event)}</p>
-                  <p className="text-xs text-gray-400 flex items-center gap-1">
-                    {timeAgo(event.createdAt)}
-                    {event.user?.isPro && (
-                      <span className="inline-flex items-center text-amber-500" title="Library Pro">
-                        <Sparkles size={10} />
-                      </span>
-                    )}
-                  </p>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+        {loading ? (
+          <p className="text-sm text-on-surface-variant text-center py-6">Loading…</p>
+        ) : events.length === 0 ? (
+          <p className="text-sm text-on-surface-variant text-center py-6">
+            Nothing yet — add friends to see their reading activity here.
+          </p>
+        ) : (
+          <ul className="space-y-3 max-h-80 overflow-y-auto">
+            {events.map((event, i) => {
+              const { icon: Icon, color } = EVENT_ICON[event.type] || EVENT_ICON.book_added;
+              return (
+                <React.Fragment key={event._id}>
+                  {i > 0 && (
+                    <div className="w-full h-1 rounded-full bg-surface shadow-neu-inset-xs" />
+                  )}
+                  <li className="flex items-start gap-3">
+                    <span
+                      className={`flex-shrink-0 w-8 h-8 rounded-full bg-surface shadow-neu-xs flex items-center justify-center ${color}`}
+                    >
+                      <Icon size={14} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm text-on-surface leading-snug">{describeEvent(event)}</p>
+                      <p className="text-xs text-on-surface-variant flex items-center gap-1">
+                        {timeAgo(event.createdAt)}
+                        {event.user?.isPro && (
+                          <span
+                            className="inline-flex items-center text-tertiary"
+                            title="Library Pro"
+                          >
+                            <Sparkles size={10} />
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </li>
+                </React.Fragment>
+              );
+            })}
+          </ul>
+        )}
+      </div>
 
       <Pagination
         page={page}

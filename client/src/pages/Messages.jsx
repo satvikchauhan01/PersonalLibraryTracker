@@ -31,18 +31,28 @@ const formatDayLabel = (dateStr) => {
   return d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-const Avatar = ({ name, isOnline }) => (
-  <div className="relative flex-shrink-0">
-    <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 flex items-center justify-center font-bold">
-      {(name || '?').charAt(0).toUpperCase()}
+const initialsOf = (name) => (name || '?').charAt(0).toUpperCase();
+
+// Neumorphic redesign ("Tactile Bibliotheca"): a rounded-square initials
+// tile (not a circle) with a presence dot, matching Stitch's own chat
+// avatars exactly. `size` controls both the tile and the corner radius.
+const Avatar = ({ name, isOnline, size = 'md' }) => {
+  const dims = size === 'sm' ? 'w-8 h-8 rounded-full text-xs' : 'w-11 h-11 rounded-neu-lg text-sm';
+  return (
+    <div className="relative flex-shrink-0">
+      <div
+        className={`${dims} bg-surface-container shadow-neu-sm flex items-center justify-center font-bold text-primary`}
+      >
+        {initialsOf(name)}
+      </div>
+      {isOnline !== undefined && (
+        <span className="absolute -bottom-0.5 -right-0.5">
+          <PresenceDot isOnline={isOnline} size={12} ringClass="ring-surface-container-low" />
+        </span>
+      )}
     </div>
-    {isOnline !== undefined && (
-      <span className="absolute -bottom-0.5 -right-0.5">
-        <PresenceDot isOnline={isOnline} />
-      </span>
-    )}
-  </div>
-);
+  );
+};
 
 const Messages = () => {
   const { user } = useContext(AuthContext);
@@ -298,94 +308,117 @@ const Messages = () => {
 
   // ── Render ───────────────────────────────────────────────────────────────
   const lastMine = [...messages].reverse().find((m) => m.from === user._id);
+  const totalUnread = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
 
   return (
-    <div className="h-[calc(100vh-8rem)] min-h-[32rem] flex flex-col">
-      <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-6 flex items-center gap-2 flex-shrink-0">
-        <MessageCircle className="text-indigo-600" /> Messages
-      </h2>
+    <div className="h-[calc(100vh-9rem)] min-h-[36rem] flex flex-col">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-4 flex-shrink-0">
+        <div className="w-11 h-11 rounded-neu-lg bg-surface-container-low shadow-neu-md flex items-center justify-center text-primary shrink-0">
+          <MessageCircle size={20} />
+        </div>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-display text-xl text-on-surface font-bold">Messages</span>
+            {totalUnread > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-xs shadow-neu-inset-xs">
+                {totalUnread} Unread
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
 
-      <div className="flex-1 min-h-0 bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden grid grid-cols-1 lg:grid-cols-[320px_1fr]">
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* ── Conversation list ── */}
         <aside
-          className={`${selectedFriend ? 'hidden lg:flex' : 'flex'} flex-col border-r border-gray-200 dark:border-gray-700 overflow-y-auto`}
+          className={`${selectedFriend ? 'hidden lg:flex' : 'flex'} lg:col-span-5 xl:col-span-4 flex-col min-h-0 bg-surface-container-low rounded-neu-xl shadow-neu-xl p-3`}
         >
-          {conversationsLoading ? (
-            <div className="flex items-center justify-center flex-1 text-gray-400">
-              <Loader2 size={22} className="animate-spin" />
-            </div>
-          ) : conversations.length === 0 ? (
-            <div className="p-6 text-center text-sm text-gray-400 flex flex-col items-center gap-3">
-              <Users size={28} className="text-gray-300 dark:text-gray-600" />
-              No friends yet.
-              <Link to="/friends" className="text-indigo-600 dark:text-indigo-400 hover:underline">
-                Find friends to message
-              </Link>
-            </div>
-          ) : (
-            conversations.map((c) => (
-              <button
-                key={c.friend._id}
-                onClick={() => openConversation(c.friend)}
-                className={`flex items-center gap-3 px-4 py-3 text-left border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
-                  selectedFriend?._id === c.friend._id ? 'bg-indigo-50 dark:bg-indigo-950/40' : ''
-                }`}
-              >
-                <Avatar name={c.friend.name} isOnline={c.friend.isOnline} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                      {c.friend.name || 'Unnamed user'}
-                    </p>
-                    {c.lastMessage && (
-                      <span className="text-[11px] text-gray-400 flex-shrink-0">
-                        {formatTime(c.lastMessage.createdAt)}
+          <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 pr-1">
+            {conversationsLoading ? (
+              <div className="flex items-center justify-center flex-1 text-on-surface-variant">
+                <Loader2 size={22} className="animate-spin" />
+              </div>
+            ) : conversations.length === 0 ? (
+              <div className="p-6 text-center text-sm text-on-surface-variant flex flex-col items-center gap-3">
+                <Users size={28} className="text-outline" />
+                No friends yet.
+                <Link to="/friends" className="text-primary hover:underline font-semibold">
+                  Find friends to message
+                </Link>
+              </div>
+            ) : (
+              conversations.map((c) => {
+                const isActive = selectedFriend?._id === c.friend._id;
+                return (
+                  <button
+                    key={c.friend._id}
+                    onClick={() => openConversation(c.friend)}
+                    className={`flex items-start gap-3 p-3 rounded-neu-lg text-left transition-all ${
+                      isActive
+                        ? 'shadow-neu-inset bg-surface-container-low'
+                        : 'shadow-neu hover:shadow-neu-inset'
+                    }`}
+                  >
+                    <Avatar name={c.friend.name} isOnline={c.friend.isOnline} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-bold text-on-surface truncate">
+                          {c.friend.name || 'Unnamed user'}
+                        </p>
+                        {c.lastMessage && (
+                          <span className="text-[11px] text-on-surface-variant flex-shrink-0">
+                            {formatTime(c.lastMessage.createdAt)}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-on-surface-variant truncate">
+                        {c.lastMessage
+                          ? `${c.lastMessage.fromMe ? 'You: ' : ''}${c.lastMessage.text}`
+                          : 'Say hello 👋'}
+                      </p>
+                    </div>
+                    {c.unreadCount > 0 && (
+                      <span className="flex-shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-on-primary text-[10px] font-bold flex items-center justify-center">
+                        {c.unreadCount > 9 ? '9+' : c.unreadCount}
                       </span>
                     )}
-                  </div>
-                  <p className="text-xs text-gray-400 truncate">
-                    {c.lastMessage
-                      ? `${c.lastMessage.fromMe ? 'You: ' : ''}${c.lastMessage.text}`
-                      : 'Say hello 👋'}
-                  </p>
-                </div>
-                {c.unreadCount > 0 && (
-                  <span className="flex-shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">
-                    {c.unreadCount > 9 ? '9+' : c.unreadCount}
-                  </span>
-                )}
-              </button>
-            ))
-          )}
+                  </button>
+                );
+              })
+            )}
+          </div>
         </aside>
 
         {/* ── Active thread ── */}
-        <div className={`${selectedFriend ? 'flex' : 'hidden lg:flex'} flex-col min-h-0`}>
+        <div
+          className={`${selectedFriend ? 'flex' : 'hidden lg:flex'} lg:col-span-7 xl:col-span-8 flex-col min-h-0 bg-surface-container-low rounded-neu-xl shadow-neu-xl p-4 lg:p-5`}
+        >
           {!selectedFriend ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-2">
-              <MessageCircle size={32} className="text-gray-300 dark:text-gray-600" />
+            <div className="flex-1 flex flex-col items-center justify-center text-on-surface-variant gap-2">
+              <MessageCircle size={32} className="text-outline" />
               Pick a conversation to start chatting.
             </div>
           ) : (
             <>
               {/* Thread header */}
-              <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+              <div className="flex items-center gap-3 pb-3 border-b border-outline-variant/20 flex-shrink-0">
                 <button
                   onClick={closeConversation}
-                  className="lg:hidden p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                  className="lg:hidden w-8 h-8 rounded-full bg-surface-container-low shadow-neu-xs flex items-center justify-center text-on-surface-variant"
                 >
-                  <ArrowLeft size={18} />
+                  <ArrowLeft size={16} />
                 </button>
                 <Avatar name={selectedFriend.name} isOnline={selectedFriend.isOnline} />
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
+                  <p className="text-sm font-bold text-on-surface truncate">
                     {selectedFriend.name || 'Unnamed user'}
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-on-surface-variant">
                     {friendTyping ? (
-                      <span className="text-indigo-500 dark:text-indigo-400">typing…</span>
+                      <span className="text-primary">typing…</span>
                     ) : selectedFriend.isOnline ? (
-                      'Online'
+                      <span className="text-secondary">Online</span>
                     ) : (
                       'Offline'
                     )}
@@ -394,12 +427,9 @@ const Messages = () => {
               </div>
 
               {/* Message list */}
-              <div
-                className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-1"
-                ref={messagesTopRef}
-              >
+              <div className="flex-1 min-h-0 overflow-y-auto py-4 space-y-3" ref={messagesTopRef}>
                 {messagesLoading ? (
-                  <div className="flex items-center justify-center h-full text-gray-400">
+                  <div className="flex items-center justify-center h-full text-on-surface-variant">
                     <Loader2 size={22} className="animate-spin" />
                   </div>
                 ) : (
@@ -409,14 +439,14 @@ const Messages = () => {
                         <button
                           onClick={handleLoadOlder}
                           disabled={loadingMore}
-                          className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-50"
+                          className="text-xs text-primary hover:underline disabled:opacity-50 font-semibold"
                         >
                           {loadingMore ? 'Loading…' : 'Load earlier messages'}
                         </button>
                       </div>
                     )}
                     {messages.length === 0 ? (
-                      <div className="flex items-center justify-center h-full text-sm text-gray-400">
+                      <div className="flex items-center justify-center h-full text-sm text-on-surface-variant">
                         No messages yet — say hello 👋
                       </div>
                     ) : (
@@ -429,23 +459,30 @@ const Messages = () => {
                           <React.Fragment key={m._id}>
                             {showDayLabel && (
                               <div className="flex justify-center my-3">
-                                <span className="text-[11px] font-medium text-gray-400 bg-gray-100 dark:bg-gray-700 px-2.5 py-1 rounded-full">
+                                <span className="text-[11px] font-medium text-on-surface-variant bg-surface-container px-3 py-1 rounded-full shadow-neu-inset-xs">
                                   {formatDayLabel(m.createdAt)}
                                 </span>
                               </div>
                             )}
-                            <div className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+                            <div
+                              className={`flex items-start gap-2 max-w-[85%] sm:max-w-[70%] ${mine ? 'ml-auto flex-row-reverse' : ''}`}
+                            >
+                              <div className="w-7 h-7 rounded-full bg-surface-container shadow-neu-xs flex items-center justify-center text-xs font-bold text-primary shrink-0 mt-0.5">
+                                {initialsOf(mine ? user.name : selectedFriend.name)}
+                              </div>
                               <div
-                                className={`max-w-[75%] sm:max-w-[60%] px-3.5 py-2 rounded-2xl text-sm break-words ${
-                                  mine
-                                    ? 'bg-indigo-600 text-white rounded-br-sm'
-                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-bl-sm'
-                                }`}
+                                className={`flex flex-col gap-1 ${mine ? 'items-end' : 'items-start'}`}
                               >
-                                {m.text}
-                                <span
-                                  className={`block text-[10px] mt-1 ${mine ? 'text-indigo-200' : 'text-gray-400'}`}
+                                <div
+                                  className={`px-3.5 py-2 text-sm break-words leading-relaxed ${
+                                    mine
+                                      ? 'rounded-2xl rounded-tr-sm bg-primary text-on-primary shadow-neu-sm'
+                                      : 'rounded-2xl rounded-tl-sm bg-surface-container-low text-on-surface shadow-neu'
+                                  }`}
                                 >
+                                  {m.text}
+                                </div>
+                                <span className="text-[10px] text-on-surface-variant px-1">
                                   {formatTime(m.createdAt)}
                                 </span>
                               </div>
@@ -456,10 +493,10 @@ const Messages = () => {
                     )}
                     {lastMine && (
                       <div className="flex justify-end pr-1">
-                        <span className="text-[10px] text-gray-400 flex items-center gap-0.5 mt-0.5">
+                        <span className="text-[10px] text-on-surface-variant flex items-center gap-0.5 mt-0.5">
                           {lastMine.read ? (
                             <>
-                              <CheckCheck size={12} className="text-indigo-500" /> Seen
+                              <CheckCheck size={12} className="text-primary" /> Seen
                             </>
                           ) : (
                             <>
@@ -477,7 +514,7 @@ const Messages = () => {
               {/* Composer */}
               <form
                 onSubmit={handleSend}
-                className="flex items-center gap-2 px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex-shrink-0"
+                className="flex items-center gap-2 pt-3 border-t border-outline-variant/20 flex-shrink-0"
               >
                 <input
                   type="text"
@@ -485,14 +522,14 @@ const Messages = () => {
                   onChange={handleDraftChange}
                   placeholder="Type a message…"
                   maxLength={2000}
-                  className="flex-1 rounded-full border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  className="flex-1 rounded-full border-none bg-surface-container-low text-sm text-on-surface placeholder:text-outline shadow-neu-inset-lg focus:shadow-neu-inset-focus focus:ring-0 px-4 py-3 transition-all"
                 />
                 <button
                   type="submit"
                   disabled={!draft.trim() || sending}
-                  className="flex-shrink-0 p-2.5 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                  className="flex-shrink-0 w-12 h-12 rounded-neu-lg bg-primary text-on-primary shadow-neu-md hover:shadow-neu-sm active:shadow-neu-inset disabled:opacity-50 flex items-center justify-center transition-all"
                 >
-                  {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                  {sending ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />}
                 </button>
               </form>
             </>

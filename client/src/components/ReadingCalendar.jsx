@@ -15,13 +15,16 @@ const buildDateRange = (days = 365) => {
   return result;
 };
 
-// Color intensity based on pages read
+// Color intensity based on pages read — neumorphic redesign: one token
+// (secondary, the "sage" accent) at increasing opacity instead of 5 separate
+// hard-coded Tailwind swatches, so this stays in sync with the design tokens
+// automatically (light or dark) rather than needing its own palette.
 const getColor = (pages) => {
-  if (!pages || pages === 0) return 'bg-gray-100 dark:bg-gray-700';
-  if (pages < 20) return 'bg-emerald-200';
-  if (pages < 50) return 'bg-emerald-400';
-  if (pages < 100) return 'bg-emerald-600';
-  return 'bg-emerald-800';
+  if (!pages || pages === 0) return 'bg-surface-container-highest';
+  if (pages < 20) return 'bg-secondary/30';
+  if (pages < 50) return 'bg-secondary/55';
+  if (pages < 100) return 'bg-secondary/80';
+  return 'bg-secondary';
 };
 
 const MONTH_LABELS = [
@@ -87,56 +90,65 @@ const ReadingCalendar = ({ refreshTrigger }) => {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 animate-pulse">
-        <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-4" />
-        <div className="h-32 bg-gray-100 dark:bg-gray-700 rounded" />
+      <div className="bg-surface rounded-neu-xl shadow-neu-lg p-6 animate-pulse">
+        <div className="h-5 bg-surface-container-high rounded w-48 mb-4" />
+        <div className="h-32 bg-surface-container-low rounded-neu" />
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+    <div className="bg-surface rounded-neu-xl shadow-neu-lg p-6">
       {/* Header row */}
       <div className="flex flex-wrap items-center gap-6 mb-5">
         <div className="flex items-center gap-2">
-          <Calendar size={20} className="text-indigo-600" />
-          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Reading Activity</h3>
+          <div className="w-9 h-9 rounded-neu bg-surface shadow-neu-inset-sm flex items-center justify-center text-primary">
+            <Calendar size={18} />
+          </div>
+          <h3 className="font-display text-lg font-bold text-on-surface">Reading Activity</h3>
         </div>
         {streakData && (
-          <div className="flex gap-4 flex-wrap">
-            <div className="flex items-center gap-1.5 bg-orange-50 rounded-xl px-3 py-1.5">
-              <Flame size={16} className="text-orange-500" />
-              <span className="text-sm font-bold text-orange-700">{streakData.streak}</span>
-              <span className="text-xs text-orange-500">day streak</span>
+          <div className="flex gap-1.5 flex-wrap">
+            <div className="flex items-center gap-1.5 bg-surface shadow-neu-xs rounded-full px-3 py-1.5">
+              <Flame size={14} className="text-tertiary" />
+              <span className="text-sm font-bold text-tertiary">{streakData.streak}</span>
+              <span className="text-xs text-tertiary">day streak</span>
             </div>
-            <div className="flex items-center gap-1.5 bg-purple-50 rounded-xl px-3 py-1.5">
-              <TrendingUp size={16} className="text-purple-500" />
-              <span className="text-sm font-bold text-purple-700">{streakData.longestStreak}</span>
-              <span className="text-xs text-purple-500">best streak</span>
+            <div className="flex items-center gap-1.5 bg-surface shadow-neu-xs rounded-full px-3 py-1.5">
+              <TrendingUp size={14} className="text-on-surface-variant" />
+              <span className="text-sm font-bold text-on-surface-variant">
+                {streakData.longestStreak}
+              </span>
+              <span className="text-xs text-on-surface-variant">best streak</span>
             </div>
-            <div className="flex items-center gap-1.5 bg-emerald-50 rounded-xl px-3 py-1.5">
-              <span className="text-sm font-bold text-emerald-700">
+            <div className="flex items-center gap-1.5 bg-surface shadow-neu-xs rounded-full px-3 py-1.5">
+              <span className="text-sm font-bold text-secondary">
                 {streakData.totalPages.toLocaleString()}
               </span>
-              <span className="text-xs text-emerald-500">pages this year</span>
+              <span className="text-xs text-secondary">pages this year</span>
             </div>
-            <div className="flex items-center gap-1.5 bg-blue-50 rounded-xl px-3 py-1.5">
-              <span className="text-sm font-bold text-blue-700">{streakData.totalSessions}</span>
-              <span className="text-xs text-blue-500">sessions</span>
+            <div className="flex items-center gap-1.5 bg-surface shadow-neu-xs rounded-full px-3 py-1.5">
+              <span className="text-sm font-bold text-on-surface-variant">
+                {streakData.totalSessions}
+              </span>
+              <span className="text-xs text-on-surface-variant">sessions</span>
             </div>
           </div>
         )}
       </div>
 
-      {/* Heatmap */}
-      <div className="overflow-x-auto">
+      {/* Heatmap — recessed into a debossed panel */}
+      <div className="overflow-x-auto rounded-neu bg-surface-container-low/60 shadow-neu-inset p-3">
         <div className="inline-block min-w-max">
           {/* Month labels */}
           <div className="flex mb-1 ml-8">
             {Array.from({ length: numCols }, (_, colIdx) => {
               const label = monthLabels.find((m) => m.col === colIdx);
               return (
-                <div key={colIdx} className="w-3.5 mr-0.5 text-xs text-gray-400 text-center">
+                <div
+                  key={colIdx}
+                  className="w-3.5 mr-0.5 text-xs text-on-surface-variant text-center"
+                >
                   {label ? MONTH_LABELS[label.month] : ''}
                 </div>
               );
@@ -148,7 +160,9 @@ const ReadingCalendar = ({ refreshTrigger }) => {
             <div className="flex flex-col gap-0.5 mr-1">
               {DAY_LABELS.map((day, i) => (
                 <div key={day} className="h-3.5 w-6 flex items-center">
-                  {i % 2 === 1 && <span className="text-xs text-gray-400 leading-none">{day}</span>}
+                  {i % 2 === 1 && (
+                    <span className="text-xs text-on-surface-variant leading-none">{day}</span>
+                  )}
                 </div>
               ))}
             </div>
@@ -182,17 +196,17 @@ const ReadingCalendar = ({ refreshTrigger }) => {
 
           {/* Legend */}
           <div className="flex items-center gap-1 mt-2 ml-8">
-            <span className="text-xs text-gray-400 mr-1">Less</span>
+            <span className="text-xs text-on-surface-variant mr-1">Less</span>
             {[
-              'bg-gray-100 dark:bg-gray-700',
-              'bg-emerald-200',
-              'bg-emerald-400',
-              'bg-emerald-600',
-              'bg-emerald-800',
+              'bg-surface-container-highest',
+              'bg-secondary/30',
+              'bg-secondary/55',
+              'bg-secondary/80',
+              'bg-secondary',
             ].map((c) => (
               <div key={c} className={`w-3.5 h-3.5 rounded-sm ${c}`} />
             ))}
-            <span className="text-xs text-gray-400 ml-1">More</span>
+            <span className="text-xs text-on-surface-variant ml-1">More</span>
           </div>
         </div>
       </div>
@@ -200,7 +214,7 @@ const ReadingCalendar = ({ refreshTrigger }) => {
       {/* Tooltip portal-ish (fixed position) */}
       {tooltip && (
         <div
-          className="fixed z-50 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 pointer-events-none shadow-xl"
+          className="fixed z-50 bg-inverse-surface text-inverse-on-surface text-xs rounded-neu px-3 py-2 pointer-events-none shadow-neu-lg"
           style={{ left: tooltip.x + 20, top: tooltip.y - 10 }}
         >
           <div className="font-semibold">{tooltip.date}</div>
@@ -212,7 +226,7 @@ const ReadingCalendar = ({ refreshTrigger }) => {
               </div>
             </>
           ) : (
-            <div className="text-gray-400">No reading logged</div>
+            <div className="opacity-70">No reading logged</div>
           )}
         </div>
       )}

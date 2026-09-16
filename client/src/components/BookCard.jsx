@@ -2,17 +2,48 @@ import React from 'react';
 import { Settings, Edit, Trash2, Zap, BookMarked, Heart, MessageSquare } from 'lucide-react';
 import StarRating from './StarRating';
 
-// Phase 04: extended status map
+// Neumorphic redesign ("Tactile Bibliotheca"), matched line-for-line against
+// Stitch's own generated markup: status reads as a small dot + bold
+// uppercase label (not a solid pill), and — deliberately, per the mock —
+// Reading breaks from the primary/secondary/tertiary token set to use raw
+// amber, matching the "amber glow" callout in Stitch's own comments.
 const STATUS_MAP = {
-  wantToRead: { label: 'Want to Read', color: 'bg-blue-100 text-blue-800' },
-  reading: { label: 'Reading', color: 'bg-yellow-100 text-yellow-800' },
-  completed: { label: 'Completed', color: 'bg-green-100 text-green-800' },
-  dnf: { label: 'DNF', color: 'bg-red-100 text-red-800' },
-  onHold: { label: 'On Hold', color: 'bg-gray-100 text-gray-700' },
+  wantToRead: { label: 'Want to Read', text: 'text-primary', dot: 'bg-primary' },
+  reading: {
+    label: 'Reading',
+    text: 'text-amber-600 dark:text-amber-400',
+    dot: 'bg-amber-500',
+  },
+  completed: { label: 'Completed', text: 'text-secondary', dot: 'bg-secondary' },
+  dnf: { label: 'DNF', text: 'text-neu-error', dot: 'bg-neu-error' },
+  onHold: { label: 'On Hold', text: 'text-on-surface-variant', dot: 'bg-outline' },
   // Legacy aliases (survive until all docs migrated)
-  toRead: { label: 'Want to Read', color: 'bg-blue-100 text-blue-800' },
-  currentlyReading: { label: 'Reading', color: 'bg-yellow-100 text-yellow-800' },
+  toRead: { label: 'Want to Read', text: 'text-primary', dot: 'bg-primary' },
+  currentlyReading: {
+    label: 'Reading',
+    text: 'text-amber-600 dark:text-amber-400',
+    dot: 'bg-amber-500',
+  },
 };
+
+// The 6 action buttons deliberately don't each get their own unique hue —
+// the design system leans on color restraint (see UI_CONTEXT's "AI-powered
+// elements" callout for the one accent that *is* semantically meaningful:
+// purple/tertiary marks AI). Only Toggle Status/Log Session/AI/Delete carry
+// color; Edit and Review stay neutral.
+const ACTIONS = [
+  { key: 'status', icon: Settings, title: 'Toggle Status', color: 'hover:text-primary' },
+  { key: 'edit', icon: Edit, title: 'Edit Book', color: 'hover:text-primary' },
+  { key: 'session', icon: BookMarked, title: 'Log Reading Session', color: 'hover:text-secondary' },
+  {
+    key: 'details',
+    icon: MessageSquare,
+    title: 'Review, Notes & Quotes',
+    color: 'hover:text-primary',
+  },
+  { key: 'insights', icon: Zap, title: 'Get Book Insights (AI)', color: 'hover:text-tertiary' },
+  { key: 'delete', icon: Trash2, title: 'Delete Book', color: 'hover:text-neu-error' },
+];
 
 const BookCard = ({
   book,
@@ -27,7 +58,8 @@ const BookCard = ({
 }) => {
   const statusDisplay = STATUS_MAP[book.status] || {
     label: book.status,
-    color: 'bg-gray-100 text-gray-700',
+    text: 'text-on-surface-variant',
+    dot: 'bg-outline',
   };
 
   // Progress bar calculation
@@ -36,134 +68,129 @@ const BookCard = ({
     ? Math.min(100, Math.round((book.currentPage / book.totalPages) * 100))
     : 0;
 
+  const handlers = {
+    status: () => onToggleStatus(book),
+    edit: () => onEdit(book),
+    session: () => onLogSession(book),
+    details: () => onOpenDetails(book),
+    insights: () => onGetInsights(book),
+    delete: () => onDelete(book),
+  };
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col md:flex-row transform transition duration-300 hover:shadow-xl">
-      <div className="relative w-full md:w-32 h-48 md:h-auto flex-shrink-0">
+    <article className="bg-surface rounded-neu-xl p-4 lg:p-6 shadow-neu-xl hover:shadow-neu-xl-hover transition-all duration-300 flex flex-col md:flex-row items-start md:items-center gap-4">
+      {/* Recessed "archival niche" frame around the cover art */}
+      <div className="relative w-28 sm:w-32 md:w-36 aspect-[2/3] rounded-neu-lg bg-surface-container-low p-1.5 shadow-neu-inset shrink-0">
         <img
           src={book.coverUrl}
           alt={`Cover for ${book.title}`}
-          className="w-full h-full object-cover object-center"
+          className="w-full h-full object-cover object-center rounded-neu shadow-sm"
           onError={(e) => {
             e.target.onerror = null;
-            e.target.src = 'https://placehold.co/128x192/475569/ffffff?text=No+Cover';
+            e.target.src = 'https://placehold.co/288x432/475569/ffffff?text=No+Cover';
           }}
         />
-        {/* Phase 05: Favorite toggle */}
+      </div>
+
+      {/* Book details & meta */}
+      <div className="flex-1 min-w-0 space-y-1.5 w-full">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Status: small dot + bold uppercase label, not a solid pill */}
+          <span
+            className={`px-2 py-1 rounded-full bg-surface shadow-neu-xs text-[0.6875rem] font-bold tracking-wide flex items-center gap-1.5 ${statusDisplay.text}`}
+          >
+            <span className={`w-2 h-2 rounded-full ${statusDisplay.dot}`} />
+            {statusDisplay.label.toUpperCase()}
+          </span>
+          {book.genre && (
+            <span className="px-2 py-0.5 rounded-full bg-surface-container-low text-on-surface-variant text-xs shadow-neu-inset-xs">
+              {book.genre}
+            </span>
+          )}
+        </div>
+
+        <div>
+          <h3 className="font-display text-xl font-bold text-on-surface truncate">{book.title}</h3>
+          <p className="text-sm text-on-surface-variant italic">by {book.author}</p>
+        </div>
+
+        {/* Rating & stars */}
+        <div className="flex items-center gap-2 pt-0.5">
+          <StarRating value={book.rating} onChange={(r) => onSetRating(book, r)} size={18} />
+          {book.rating > 0 && (
+            <span className="text-xs font-bold text-on-surface">{book.rating.toFixed(1)}</span>
+          )}
+        </div>
+
+        {/* Tag chips — small extruded "stamped" pills */}
+        {book.tags?.length > 0 && (
+          <div className="flex flex-wrap gap-1 pt-0.5">
+            {book.tags.map((tag) => (
+              <span
+                key={tag}
+                className="text-[11px] font-medium text-secondary bg-surface shadow-neu-xs px-2 py-0.5 rounded-full"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Progress bar — embossed channel, sage→indigo fill */}
+        {hasProgress && (
+          <div className="space-y-1.5 pt-1 w-full max-w-xl">
+            <div className="flex justify-between text-xs text-on-surface-variant">
+              <span
+                className={`font-semibold ${progressPct >= 100 ? 'text-secondary' : 'text-primary'}`}
+              >
+                {progressPct}% completed
+              </span>
+              <span>
+                {book.currentPage} / {book.totalPages} pages
+              </span>
+            </div>
+            <div className="w-full h-3 rounded-full bg-surface shadow-neu-inset-sm overflow-hidden p-0.5">
+              <div
+                className={`h-full rounded-full shadow-sm transition-all duration-500 ${
+                  progressPct >= 100
+                    ? 'bg-secondary'
+                    : 'bg-gradient-to-r from-secondary to-primary-container'
+                }`}
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Action column: favorite + 6 mini circular action buttons */}
+      <div className="flex md:flex-col items-center justify-between md:justify-center gap-3 shrink-0 w-full md:w-auto pt-2 md:pt-0">
         <button
           onClick={() => onToggleFavorite(book)}
-          className="absolute top-2 right-2 p-1.5 rounded-full bg-white/80 dark:bg-gray-900/80 hover:bg-white dark:hover:bg-gray-900 shadow-sm transition-colors"
+          className="w-10 h-10 rounded-full bg-surface shadow-neu-sm hover:shadow-neu-inset-sm flex items-center justify-center transition-all"
           title={book.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
         >
           <Heart
-            size={16}
-            className={book.isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-400'}
+            size={18}
+            className={
+              book.isFavorite ? 'text-neu-error fill-neu-error' : 'text-on-surface-variant'
+            }
           />
         </button>
-      </div>
-      <div className="p-4 flex flex-col justify-between flex-grow">
-        <div>
-          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 line-clamp-2">
-            {book.title}
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 italic">by {book.author}</p>
-          <p className="text-xs text-gray-400 mb-2">Genre: {book.genre || 'N/A'}</p>
-          <div className="flex items-center flex-wrap gap-2 mb-1">
-            <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusDisplay.color}`}>
-              {statusDisplay.label}
-            </span>
-            {/* Phase 05: Star rating */}
-            <StarRating value={book.rating} onChange={(r) => onSetRating(book, r)} size={15} />
-          </div>
-
-          {/* Phase 05: Tag chips */}
-          {book.tags?.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1">
-              {book.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="text-[11px] font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Phase 04: Progress bar */}
-          {hasProgress && (
-            <div className="mt-3">
-              <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                <span>
-                  {book.currentPage} / {book.totalPages} pages
-                </span>
-                <span className="font-semibold text-indigo-600 dark:text-indigo-400">
-                  {progressPct}%
-                </span>
-              </div>
-              <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${
-                    progressPct >= 100
-                      ? 'bg-green-500'
-                      : progressPct > 50
-                        ? 'bg-indigo-500'
-                        : 'bg-indigo-400'
-                  }`}
-                  style={{ width: `${progressPct}%` }}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            onClick={() => onToggleStatus(book)}
-            className="flex items-center justify-center p-2 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 transition duration-150 shadow-md"
-            title="Toggle Status"
-          >
-            <Settings size={18} />
-          </button>
-          <button
-            onClick={() => onEdit(book)}
-            className="flex items-center justify-center p-2 bg-yellow-500 text-white rounded-full hover:bg-yellow-600 transition duration-150 shadow-md"
-            title="Edit Book"
-          >
-            <Edit size={18} />
-          </button>
-          {/* Phase 04: Log Session button */}
-          <button
-            onClick={() => onLogSession(book)}
-            className="flex items-center justify-center p-2 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition duration-150 shadow-md"
-            title="Log Reading Session"
-          >
-            <BookMarked size={18} />
-          </button>
-          {/* Phase 05: Review / Notes / Quotes / Tags */}
-          <button
-            onClick={() => onOpenDetails(book)}
-            className="flex items-center justify-center p-2 bg-teal-500 text-white rounded-full hover:bg-teal-600 transition duration-150 shadow-md"
-            title="Review, Notes & Quotes"
-          >
-            <MessageSquare size={18} />
-          </button>
-          <button
-            onClick={() => onGetInsights(book)}
-            className="flex items-center justify-center p-2 bg-purple-500 text-white rounded-full hover:bg-purple-600 transition duration-150 shadow-md"
-            title="Get Book Insights (AI)"
-          >
-            <Zap size={18} />
-          </button>
-          <button
-            onClick={() => onDelete(book)}
-            className="flex items-center justify-center p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-150 shadow-md"
-            title="Delete Book"
-          >
-            <Trash2 size={18} />
-          </button>
+        <div className="grid grid-cols-6 md:grid-cols-3 gap-1.5">
+          {ACTIONS.map(({ key, icon: Icon, title, color }) => (
+            <button
+              key={key}
+              onClick={handlers[key]}
+              className={`w-8 h-8 rounded-full bg-surface shadow-neu-xs hover:shadow-neu-inset-sm flex items-center justify-center text-on-surface-variant transition-all ${color}`}
+              title={title}
+            >
+              <Icon size={16} />
+            </button>
+          ))}
         </div>
       </div>
-    </div>
+    </article>
   );
 };
 

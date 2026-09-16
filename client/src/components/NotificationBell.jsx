@@ -152,19 +152,20 @@ const NotificationBell = () => {
       <div className="relative" ref={menuRef}>
         <button
           onClick={() => setOpen((prev) => !prev)}
-          className="relative p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="relative w-9 h-9 rounded-full bg-surface-container-low shadow-neu-xs hover:shadow-neu-inset-sm flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-all"
           title="Notifications"
+          aria-label="View Notifications"
         >
-          <Bell size={20} />
+          <Bell size={18} />
           {badgeCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold">
+            <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-neu-error text-on-neu-error text-[10px] font-bold ring-2 ring-surface-container-low">
               {badgeCount > 9 ? '9+' : badgeCount}
             </span>
           )}
         </button>
 
         {open && (
-          <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 z-20 max-h-[28rem] overflow-y-auto">
+          <div className="absolute right-0 mt-2 w-80 bg-surface rounded-neu-lg shadow-neu-xl border-none z-20 max-h-[28rem] overflow-y-auto">
             <div className="px-4 py-3 border-b dark:border-gray-800 font-semibold text-sm text-gray-700 dark:text-gray-200">
               Friend Requests
             </div>

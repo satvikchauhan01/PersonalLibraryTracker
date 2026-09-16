@@ -115,121 +115,204 @@ const Friends = () => {
     }
   };
 
+  const onlineCount = friends.filter((f) => f.isOnline).length;
+
+  const initials = (name) =>
+    (name || '?')
+      .split(' ')
+      .map((p) => p[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+
   return (
     <>
-      <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-        <Users className="text-indigo-600" /> Friends
-      </h2>
-
-      {/* Search */}
-      <div className="relative mb-3 max-w-md">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Find friends by name or email..."
-          className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-full focus:ring-indigo-500 focus:border-indigo-500"
-        />
-        <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+      {/* Screen title */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-secondary" />
+          <span className="text-xs uppercase tracking-widest text-secondary font-semibold">
+            Sanctuary Fellowship
+          </span>
+        </div>
+        <h1 className="font-display text-3xl font-bold text-on-surface tracking-tight flex items-center gap-2">
+          <Users className="text-primary" /> Curator Circle &amp; Fellow Readers
+        </h1>
+        <p className="text-sm text-on-surface-variant max-w-2xl mt-1">
+          Connect with fellow readers, keep tabs on who's online, and jump straight into a
+          conversation.
+        </p>
       </div>
 
-      {query.trim().length >= 2 && (
-        <div className="mb-10 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 divide-y dark:divide-gray-700 max-w-md">
-          {searching ? (
-            <p className="px-4 py-4 text-sm text-gray-400">Searching…</p>
-          ) : results.length === 0 ? (
-            <p className="px-4 py-4 text-sm text-gray-400">No users found.</p>
-          ) : (
-            results.map((u) => (
-              <div key={u._id} className="flex items-center justify-between px-4 py-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                    {u.name || 'Unnamed user'}
-                  </p>
-                  <p className="text-xs text-gray-400 truncate">{u.email}</p>
-                </div>
-                {u.relation === 'friends' && (
-                  <span className="text-xs font-medium text-green-600 flex items-center gap-1">
-                    <UserCheck size={14} /> Friends
-                  </span>
-                )}
-                {u.relation === 'pending_sent' && (
-                  <span className="text-xs font-medium text-gray-400 flex items-center gap-1">
-                    <Clock size={14} /> Pending
-                  </span>
-                )}
-                {u.relation === 'pending_received' && (
-                  <button
-                    onClick={() => handleAcceptFromSearch(u)}
-                    className="text-xs font-medium px-3 py-1.5 rounded-full bg-indigo-600 text-white hover:bg-indigo-700"
-                  >
-                    Accept
-                  </button>
-                )}
-                {u.relation === 'none' && (
-                  <button
-                    onClick={() => handleSendRequest(u._id)}
-                    className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900"
-                  >
-                    <UserPlus size={13} /> Add
-                  </button>
-                )}
-              </div>
-            ))
-          )}
+      {/* Quick stat cards */}
+      <div className="grid grid-cols-2 gap-4 mb-6 max-w-lg">
+        <div className="p-4 rounded-neu-xl bg-surface-container-low shadow-neu-lg flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-xs text-on-surface-variant font-medium">My Friends</span>
+            <div className="font-display text-3xl text-on-surface font-bold">{friends.length}</div>
+          </div>
+          <div className="w-11 h-11 rounded-neu-lg bg-surface-container flex items-center justify-center shadow-neu-inset-sm text-primary">
+            <Users size={20} />
+          </div>
         </div>
-      )}
+        <div className="p-4 rounded-neu-xl bg-surface-container-low shadow-neu-lg flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-xs text-on-surface-variant font-medium">Online Now</span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-display text-3xl text-secondary font-bold">{onlineCount}</span>
+              <span className="w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_rgba(55,103,88,0.8)] animate-pulse" />
+            </div>
+          </div>
+          <div className="w-11 h-11 rounded-neu-lg bg-surface-container flex items-center justify-center shadow-neu-inset-sm text-secondary">
+            <UserCheck size={20} />
+          </div>
+        </div>
+      </div>
+
+      {/* Search & filter bar */}
+      <div className="p-4 lg:p-5 rounded-neu-xl bg-surface-container-low shadow-neu-lg mb-8 max-w-md">
+        <div className="relative">
+          <Search
+            size={18}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant"
+          />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Find friends by name or email..."
+            className="w-full pl-11 pr-4 py-3 rounded-full bg-surface-container border-none text-sm text-on-surface placeholder:text-on-surface-variant shadow-neu-inset-lg focus:shadow-neu-inset-focus focus:ring-0 transition-all"
+          />
+        </div>
+
+        {query.trim().length >= 2 && (
+          <div className="mt-3 space-y-2">
+            {searching ? (
+              <p className="text-sm text-on-surface-variant px-1 py-2">Searching…</p>
+            ) : results.length === 0 ? (
+              <p className="text-sm text-on-surface-variant px-1 py-2">No users found.</p>
+            ) : (
+              results.map((u) => (
+                <div
+                  key={u._id}
+                  className="p-3 rounded-neu-lg bg-surface-container shadow-neu-inset-sm flex items-center justify-between gap-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-full bg-primary-container text-on-primary-container text-xs font-bold flex items-center justify-center shrink-0 shadow-neu-xs">
+                      {initials(u.name)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-on-surface truncate">
+                        {u.name || 'Unnamed user'}
+                      </p>
+                      <p className="text-xs text-on-surface-variant truncate">{u.email}</p>
+                    </div>
+                  </div>
+                  {u.relation === 'friends' && (
+                    <span className="text-xs font-semibold text-secondary flex items-center gap-1 shrink-0">
+                      <UserCheck size={14} /> Friends
+                    </span>
+                  )}
+                  {u.relation === 'pending_sent' && (
+                    <span className="text-xs font-semibold text-on-surface-variant flex items-center gap-1 shrink-0">
+                      <Clock size={14} /> Pending
+                    </span>
+                  )}
+                  {u.relation === 'pending_received' && (
+                    <button
+                      onClick={() => handleAcceptFromSearch(u)}
+                      className="text-xs font-bold px-3.5 py-1.5 rounded-full bg-primary text-on-primary shadow-neu-sm hover:shadow-neu-xs active:shadow-neu-inset transition-all shrink-0"
+                    >
+                      Accept
+                    </button>
+                  )}
+                  {u.relation === 'none' && (
+                    <button
+                      onClick={() => handleSendRequest(u._id)}
+                      className="inline-flex items-center gap-1 text-xs font-semibold px-3.5 py-1.5 rounded-full bg-surface-container-low text-primary shadow-neu-xs hover:shadow-neu-inset-sm transition-all shrink-0"
+                    >
+                      <UserPlus size={13} /> Add
+                    </button>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Friends list */}
-      <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">
-        My Friends <span className="text-base font-normal text-gray-400">({friends.length})</span>
-      </h3>
+      <div className="flex items-center gap-2 mb-4">
+        <h2 className="font-display text-xl font-bold text-on-surface">My Curators Circle</h2>
+        <span className="px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-xs shadow-neu-inset-xs">
+          {friends.length} Reader{friends.length === 1 ? '' : 's'}
+        </span>
+      </div>
 
       {loading ? (
-        <p className="text-sm text-gray-400">Loading…</p>
+        <p className="text-sm text-on-surface-variant">Loading…</p>
       ) : friends.length === 0 ? (
-        <div className="text-center py-10 bg-white dark:bg-gray-800 rounded-lg shadow-sm text-gray-400">
+        <div className="text-center py-10 bg-surface rounded-neu-xl shadow-neu-lg text-on-surface-variant">
           No friends yet — search above to find people to connect with.
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {friends.map((f) => (
             <div
               key={f._id}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3"
+              className="p-4 rounded-neu-xl bg-surface-container-low shadow-neu-lg hover:shadow-neu-lg-hover hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3"
             >
-              <div className="relative flex-shrink-0">
-                <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 flex items-center justify-center font-bold">
-                  {/* Bug fix: crashed the whole page (uncaught TypeError, caught only by
-                      the ErrorBoundary) for any friend whose `name` is empty — possible for
-                      an account created before Phase 01 added registration validation.
-                      Same defensive fallback Messages.jsx's Avatar already uses. */}
-                  {(f.name || '?').charAt(0).toUpperCase()}
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="relative shrink-0">
+                  {f.avatarUrl ? (
+                    <img
+                      src={f.avatarUrl}
+                      alt={f.name}
+                      className="w-12 h-12 rounded-neu-lg object-cover shadow-neu-sm"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-neu-lg bg-primary-container text-on-primary-container flex items-center justify-center font-bold shadow-neu-sm">
+                      {initials(f.name)}
+                    </div>
+                  )}
+                  <span className="absolute -top-1 -right-1">
+                    <PresenceDot
+                      isOnline={f.isOnline}
+                      size={14}
+                      ringClass="ring-surface-container-low"
+                    />
+                  </span>
                 </div>
-                <span className="absolute -bottom-0.5 -right-0.5">
-                  <PresenceDot isOnline={f.isOnline} />
-                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-on-surface truncate">
+                    {f.name || 'Unnamed user'}
+                  </p>
+                  <p
+                    className={`text-xs font-medium flex items-center gap-1 ${f.isOnline ? 'text-secondary' : 'text-on-surface-variant'}`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${f.isOnline ? 'bg-secondary' : 'bg-outline-variant'}`}
+                    />
+                    {f.isOnline ? 'Online' : 'Offline'}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0 flex-grow">
-                <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                  {f.name || 'Unnamed user'}
-                </p>
-                <p className="text-xs text-gray-400">{f.isOnline ? 'Online' : 'Offline'}</p>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Link
+                  to={`/messages?friend=${f._id}`}
+                  className="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center text-primary shadow-neu-xs hover:shadow-neu-inset-sm transition-all"
+                  title="Message"
+                >
+                  <MessageCircle size={15} />
+                </Link>
+                <button
+                  onClick={() => handleUnfriend(f._id)}
+                  className="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:text-neu-error shadow-neu-xs hover:shadow-neu-inset-sm transition-all"
+                  title="Unfriend"
+                >
+                  <UserMinus size={15} />
+                </button>
               </div>
-              <Link
-                to={`/messages?friend=${f._id}`}
-                className="flex-shrink-0 text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400"
-                title="Message"
-              >
-                <MessageCircle size={16} />
-              </Link>
-              <button
-                onClick={() => handleUnfriend(f._id)}
-                className="flex-shrink-0 text-gray-300 hover:text-red-500"
-                title="Unfriend"
-              >
-                <UserMinus size={16} />
-              </button>
             </div>
           ))}
         </div>

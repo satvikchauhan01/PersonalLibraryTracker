@@ -26,12 +26,15 @@ import {
   Star,
   Sparkles,
   Loader2,
+  CalendarDays,
 } from 'lucide-react';
 
 // Phase 07: fixed categorical order, validated for CVD-safety with
 // scripts/validate_palette.js from the dataviz skill (PASS on separation,
 // WARN on surface contrast — mitigated by always pairing a slice with a
-// visible legend/tooltip label, never color alone).
+// visible legend/tooltip label, never color alone). Left untouched by the
+// neumorphic redesign — deliberately vivid/saturated against the muted
+// shell so categories stay distinguishable, unlike the token palette.
 const GENRE_COLORS = [
   '#6366f1', // indigo
   '#10b981', // emerald
@@ -47,24 +50,51 @@ const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = [currentYear, currentYear - 1, currentYear - 2];
 
 // Phase 13: Recharts renders to SVG with inline style props, not Tailwind
-// classes — so unlike everything else on this page, its axis/grid colors
-// have to be picked in JS based on the active theme, not with a dark: variant.
+// classes — so unlike everything else on this page, its axis/grid/bar
+// colors have to be picked in JS based on the active theme. Neumorphic
+// redesign: these are now the exact --neu-* token hex values (see
+// index.css) instead of the old raw indigo/sky Tailwind palette, so the
+// charts read as part of the same "Tactile Bibliotheca" system.
+const NEU_HEX = {
+  light: {
+    primary: '#4648d4',
+    secondary: '#376758',
+    tertiary: '#6b38d4',
+    onSurfaceVariant: '#464554',
+    outlineVariant: '#c7c4d7',
+  },
+  dark: {
+    primary: '#c0c1ff',
+    secondary: '#9ed1be',
+    tertiary: '#d0bcff',
+    onSurfaceVariant: '#c5c4d1',
+    outlineVariant: '#45454f',
+  },
+};
 const CHART_AXIS_PROPS = {
   light: {
-    tick: { fill: '#9ca3af', fontSize: 12 },
-    axisLine: { stroke: '#e5e7eb' },
+    tick: { fill: NEU_HEX.light.onSurfaceVariant, fontSize: 12 },
+    axisLine: { stroke: NEU_HEX.light.outlineVariant },
     tickLine: false,
   },
   dark: {
-    tick: { fill: '#6b7280', fontSize: 12 },
-    axisLine: { stroke: '#374151' },
+    tick: { fill: NEU_HEX.dark.onSurfaceVariant, fontSize: 12 },
+    axisLine: { stroke: NEU_HEX.dark.outlineVariant },
     tickLine: false,
   },
 };
-const GRID_STROKE = { light: '#f3f4f6', dark: '#1f2937' };
+const GRID_STROKE = { light: NEU_HEX.light.outlineVariant, dark: NEU_HEX.dark.outlineVariant };
 const CURSOR_FILL = {
-  light: { indigo: '#f5f3ff', sky: '#ecfeff', amber: '#fffbeb' },
-  dark: { indigo: '#312e81', sky: '#164e63', amber: '#451a03' },
+  light: {
+    indigo: 'rgba(70,72,212,0.08)',
+    sky: 'rgba(55,103,88,0.08)',
+    amber: 'rgba(245,158,11,0.1)',
+  },
+  dark: {
+    indigo: 'rgba(192,193,255,0.1)',
+    sky: 'rgba(158,209,190,0.1)',
+    amber: 'rgba(245,158,11,0.15)',
+  },
 };
 
 const GoalProgressCard = ({ goal, onDelete }) => {
@@ -79,49 +109,66 @@ const GoalProgressCard = ({ goal, onDelete }) => {
   const isDone = goal.percent >= 100;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-5">
-      <div className="flex justify-between items-start mb-2">
-        <div>
-          <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{label}</p>
-          <h3 className="font-bold text-gray-800 dark:text-gray-100">
-            {goal.target} {goal.metric === 'books' ? 'books' : 'pages'}
-          </h3>
+    <div className="relative bg-surface rounded-neu-xl p-4 shadow-neu-lg hover:shadow-neu-lg-hover transition-all duration-300 flex flex-col justify-between">
+      <div>
+        <div className="flex items-center justify-between gap-2">
+          <span className="px-2 py-1 rounded-full bg-surface shadow-neu-inset-sm text-xs text-primary font-semibold">
+            {goal.period === 'yearly' ? 'Annual Milestone' : 'Monthly Milestone'}
+          </span>
+          <button
+            onClick={() => onDelete(goal._id)}
+            className="w-7 h-7 rounded-full bg-surface shadow-neu-xs hover:shadow-neu-inset-sm text-outline hover:text-neu-error flex items-center justify-center transition-all"
+            title="Delete goal"
+          >
+            <Trash2 size={14} />
+          </button>
         </div>
-        <button
-          onClick={() => onDelete(goal._id)}
-          className="text-gray-300 hover:text-red-500"
-          title="Delete goal"
-        >
-          <Trash2 size={15} />
-        </button>
+        <h3 className="font-display text-lg text-on-surface font-semibold mt-2">{label}</h3>
+        <p className="text-xs text-on-surface-variant mt-0.5">
+          {goal.target} {goal.metric === 'books' ? 'books' : 'pages'} targeted
+        </p>
       </div>
-      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-        <span>
-          {goal.actual} / {goal.target}
-        </span>
-        <span
-          className={`font-semibold ${isDone ? 'text-green-600 dark:text-green-400' : 'text-indigo-600 dark:text-indigo-400'}`}
-        >
-          {goal.percent}%
-        </span>
-      </div>
-      <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-500 ${isDone ? 'bg-green-500' : 'bg-indigo-500'}`}
-          style={{ width: `${goal.percent}%` }}
-        />
+      <div className="mt-4 space-y-1.5">
+        <div className="flex items-baseline justify-between">
+          <span className="font-bold text-on-surface text-lg">
+            {goal.actual}{' '}
+            <span className="font-normal text-on-surface-variant text-xs">/ {goal.target}</span>
+          </span>
+          <span className={`font-bold ${isDone ? 'text-secondary' : 'text-primary'}`}>
+            {goal.percent}%
+          </span>
+        </div>
+        <div className="h-3 w-full bg-surface rounded-full shadow-neu-inset-sm p-0.5 overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${
+              isDone ? 'bg-secondary' : 'bg-gradient-to-r from-primary-container to-primary'
+            }`}
+            style={{ width: `${Math.min(100, goal.percent)}%` }}
+          />
+        </div>
       </div>
     </div>
   );
 };
 
-const ChartCard = ({ icon: Icon, title, children, empty }) => (
-  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-5">
-    <h3 className="font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-4">
-      <Icon size={16} className="text-indigo-500" /> {title}
-    </h3>
+const ChartCard = ({ icon: Icon, eyebrow, title, badge, children, empty }) => (
+  <div className="bg-surface rounded-neu-xl p-4 shadow-neu-lg flex flex-col justify-between gap-4">
+    <div className="flex items-center justify-between gap-2">
+      <div>
+        <span className="text-xs text-primary font-semibold tracking-wide uppercase flex items-center gap-1.5">
+          <Icon size={13} /> {eyebrow}
+        </span>
+        <h4 className="font-display text-base text-on-surface font-semibold mt-0.5">{title}</h4>
+      </div>
+      {badge && (
+        <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-surface shadow-neu-inset-sm shrink-0">
+          <span className="w-2 h-2 rounded-full bg-primary" />
+          <span className="text-xs font-bold text-on-surface">{badge}</span>
+        </div>
+      )}
+    </div>
     {empty ? (
-      <div className="h-56 flex items-center justify-center text-sm text-gray-400">
+      <div className="h-56 flex items-center justify-center text-sm text-on-surface-variant">
         Nothing here yet — start logging progress and rating books.
       </div>
     ) : (
@@ -135,6 +182,7 @@ const Dashboard = () => {
   const axisProps = CHART_AXIS_PROPS[theme];
   const gridStroke = GRID_STROKE[theme];
   const cursorFill = CURSOR_FILL[theme];
+  const neuHex = NEU_HEX[theme];
 
   const [goals, setGoals] = useState([]);
   const [goalsLoading, setGoalsLoading] = useState(true);
@@ -254,51 +302,60 @@ const Dashboard = () => {
   const hasPagesActivity = overview?.pagesPerMonth.some((m) => m.pages > 0);
   const hasGenres = overview?.genreBreakdown.length > 0;
   const hasRatings = overview?.ratingDistribution.length > 0;
+  const totalBooksThisYear = overview?.booksPerMonth.reduce((s, m) => s + m.count, 0) || 0;
+  const totalPagesThisYear = overview?.pagesPerMonth.reduce((s, m) => s + m.pages, 0) || 0;
+
+  const selectClass =
+    'rounded-neu border-none text-sm px-3 py-1.5 bg-surface shadow-neu-inset-lg focus:shadow-neu-inset-focus focus:ring-0 text-on-surface';
 
   return (
     <>
-      <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-        <Target className="text-indigo-600" /> Reading Dashboard
-      </h2>
-
       {/* ── Goals ────────────────────────────────────────────────────────── */}
       <div className="mb-10">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">Goals</h3>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-primary shadow-neu-xs" />
+              <span className="text-xs uppercase tracking-widest text-on-surface-variant font-semibold">
+                Active Targets
+              </span>
+            </div>
+            <h2 className="font-display text-2xl text-on-surface tracking-tight font-bold flex items-center gap-2 mt-0.5">
+              <Target className="text-primary" size={22} /> Reading Goals
+            </h2>
+          </div>
           <button
             onClick={() => setShowGoalForm((prev) => !prev)}
-            className="inline-flex items-center px-3 py-1.5 rounded-full bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700"
+            className="px-4 py-2.5 rounded-full bg-surface shadow-neu-md hover:shadow-neu active:shadow-neu-inset text-primary text-sm font-semibold flex items-center gap-1.5 transition-all"
           >
-            <Plus size={15} className="mr-1" /> New Goal
+            <Plus size={16} /> New Goal
           </button>
         </div>
 
         {showGoalForm && (
           <form
             onSubmit={handleCreateGoal}
-            className="flex flex-wrap items-end gap-3 mb-6 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700"
+            className="flex flex-wrap items-end gap-4 mb-6 p-4 bg-surface rounded-neu-xl shadow-neu-lg"
           >
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              <label className="block text-xs font-medium text-on-surface-variant mb-1">
                 Period
               </label>
               <select
                 value={goalForm.period}
                 onChange={(e) => setGoalForm((f) => ({ ...f, period: e.target.value }))}
-                className="rounded-md border-gray-300 dark:border-gray-600 shadow-sm text-sm px-3 py-1.5 border bg-white dark:bg-gray-700 dark:text-gray-100"
+                className={selectClass}
               >
                 <option value="yearly">Yearly</option>
                 <option value="monthly">Monthly</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                Year
-              </label>
+              <label className="block text-xs font-medium text-on-surface-variant mb-1">Year</label>
               <select
                 value={goalForm.year}
                 onChange={(e) => setGoalForm((f) => ({ ...f, year: e.target.value }))}
-                className="rounded-md border-gray-300 dark:border-gray-600 shadow-sm text-sm px-3 py-1.5 border bg-white dark:bg-gray-700 dark:text-gray-100"
+                className={selectClass}
               >
                 {YEAR_OPTIONS.map((y) => (
                   <option key={y} value={y}>
@@ -309,13 +366,13 @@ const Dashboard = () => {
             </div>
             {goalForm.period === 'monthly' && (
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                <label className="block text-xs font-medium text-on-surface-variant mb-1">
                   Month
                 </label>
                 <select
                   value={goalForm.month}
                   onChange={(e) => setGoalForm((f) => ({ ...f, month: e.target.value }))}
-                  className="rounded-md border-gray-300 dark:border-gray-600 shadow-sm text-sm px-3 py-1.5 border bg-white dark:bg-gray-700 dark:text-gray-100"
+                  className={selectClass}
                 >
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                     <option key={m} value={m}>
@@ -326,20 +383,20 @@ const Dashboard = () => {
               </div>
             )}
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              <label className="block text-xs font-medium text-on-surface-variant mb-1">
                 Metric
               </label>
               <select
                 value={goalForm.metric}
                 onChange={(e) => setGoalForm((f) => ({ ...f, metric: e.target.value }))}
-                className="rounded-md border-gray-300 dark:border-gray-600 shadow-sm text-sm px-3 py-1.5 border bg-white dark:bg-gray-700 dark:text-gray-100"
+                className={selectClass}
               >
                 <option value="books">Books</option>
                 <option value="pages">Pages</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              <label className="block text-xs font-medium text-on-surface-variant mb-1">
                 Target
               </label>
               <input
@@ -348,22 +405,22 @@ const Dashboard = () => {
                 value={goalForm.target}
                 onChange={(e) => setGoalForm((f) => ({ ...f, target: e.target.value }))}
                 placeholder="e.g. 24"
-                className="w-24 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm text-sm px-3 py-1.5 border"
+                className="w-24 rounded-neu border-none text-sm px-3 py-1.5 bg-surface shadow-neu-inset-lg focus:shadow-neu-inset-focus focus:ring-0 text-on-surface"
               />
             </div>
             <button
               type="submit"
               disabled={savingGoal}
-              className="px-4 py-1.5 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-60"
+              className="px-4 py-2 rounded-full bg-primary text-on-primary text-sm font-bold shadow-neu-sm hover:shadow-neu-xs active:shadow-neu-inset disabled:opacity-60 transition-all"
             >
               {savingGoal ? 'Saving…' : 'Create'}
             </button>
-            {goalError && <p className="text-sm text-red-600 w-full">{goalError}</p>}
+            {goalError && <p className="text-sm text-neu-error w-full">{goalError}</p>}
           </form>
         )}
 
         {!goalsLoading && goals.length === 0 ? (
-          <div className="text-center py-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm text-gray-400 text-sm">
+          <div className="text-center py-8 bg-surface rounded-neu-xl shadow-neu-lg text-on-surface-variant text-sm">
             No goals yet — set one to track your progress.
           </div>
         ) : (
@@ -375,57 +432,89 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* ── Analytics ────────────────────────────────────────────────────── */}
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">Analytics</h3>
-        <select
-          value={year}
-          onChange={(e) => setYear(Number(e.target.value))}
-          className="rounded-md border-gray-300 dark:border-gray-600 shadow-sm text-sm px-3 py-1.5 border bg-white dark:bg-gray-700 dark:text-gray-100"
-        >
-          {YEAR_OPTIONS.map((y) => (
-            <option key={y} value={y}>
-              {y}
-            </option>
-          ))}
-        </select>
+      {/* ── AI habit insight ─────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden rounded-neu-xl bg-surface shadow-neu-xl p-4 lg:p-6 mb-10">
+        <div className="absolute -top-12 -right-12 w-64 h-64 rounded-full bg-tertiary/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-12 -left-12 w-64 h-64 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+        <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-11 h-11 shrink-0 rounded-neu-lg bg-surface shadow-neu-md flex items-center justify-center text-tertiary">
+              <Sparkles size={20} />
+            </div>
+            <div className="space-y-1">
+              <span className="text-xs uppercase tracking-wider text-tertiary font-bold">
+                AI Reading Habit Insight
+              </span>
+              {!habitInsight && !habitLoading && !habitError && (
+                <p className="text-sm text-on-surface">
+                  Get a plain-language read on your {year} reading habits.
+                </p>
+              )}
+              {habitLoading && (
+                <p className="text-sm text-on-surface-variant flex items-center gap-2">
+                  <Loader2 size={15} className="animate-spin" /> Thinking…
+                </p>
+              )}
+              {habitError && <p className="text-sm text-neu-error">{habitError}</p>}
+              {habitInsight && (
+                <p className="text-sm text-on-surface leading-relaxed max-w-3xl">
+                  {habitInsight.insight}
+                </p>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={handleGetInsight}
+            disabled={habitLoading}
+            className="shrink-0 px-4 py-2.5 rounded-full bg-surface shadow-neu-md hover:shadow-neu active:shadow-neu-inset text-on-surface text-sm font-medium flex items-center gap-1.5 transition-all disabled:opacity-60"
+          >
+            <Sparkles size={15} className="text-tertiary" />
+            {habitInsight ? 'Refresh Insight' : 'Get My Insight'}
+          </button>
+        </div>
       </div>
 
-      {/* Phase 18: AI habit insight — plain-language read on the same numbers below */}
-      <div className="mb-6 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 border border-purple-200 dark:border-purple-800 rounded-xl p-4">
-        {!habitInsight && !habitLoading && (
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <p className="text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2">
-              <Sparkles size={16} className="text-purple-500" />
-              Get a plain-language read on your {year} reading habits.
-            </p>
-            <button
-              onClick={handleGetInsight}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-600 text-white text-xs font-semibold hover:bg-purple-700"
-            >
-              <Sparkles size={13} /> Get My Insight
-            </button>
+      {/* ── Analytics ────────────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-secondary shadow-neu-xs" />
+            <span className="text-xs uppercase tracking-widest text-on-surface-variant font-semibold">
+              Archival Statistics
+            </span>
           </div>
-        )}
-        {habitLoading && (
-          <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-            <Loader2 size={15} className="animate-spin" /> Thinking…
-          </p>
-        )}
-        {habitError && <p className="text-sm text-red-600 dark:text-red-400">{habitError}</p>}
-        {habitInsight && (
-          <p className="text-sm text-gray-700 dark:text-gray-200 flex items-start gap-2">
-            <Sparkles size={16} className="text-purple-500 flex-shrink-0 mt-0.5" />
-            {habitInsight.insight}
-          </p>
-        )}
+          <h2 className="font-display text-2xl text-on-surface tracking-tight font-bold mt-0.5">
+            Reading Analytics
+          </h2>
+        </div>
+        <div className="h-10 px-4 rounded-full bg-surface shadow-neu-inset-lg flex items-center gap-2 text-on-surface">
+          <CalendarDays size={17} className="text-outline" />
+          <select
+            aria-label="Analytics Year"
+            value={year}
+            onChange={(e) => setYear(Number(e.target.value))}
+            className="bg-transparent text-sm text-on-surface font-semibold focus:outline-none cursor-pointer"
+          >
+            {YEAR_OPTIONS.map((y) => (
+              <option key={y} value={y}>
+                Year {y}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {overviewLoading ? (
-        <div className="text-gray-400 text-sm py-8 text-center">Loading analytics…</div>
+        <div className="text-on-surface-variant text-sm py-8 text-center">Loading analytics…</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ChartCard icon={BarChart3} title={`Books Completed — ${year}`} empty={!hasBooksActivity}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ChartCard
+            icon={BarChart3}
+            eyebrow="Volume Completed"
+            title={`Books Completed — ${year}`}
+            badge={hasBooksActivity ? `${totalBooksThisYear} Books` : null}
+            empty={!hasBooksActivity}
+          >
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={overview.booksPerMonth}
@@ -435,12 +524,18 @@ const Dashboard = () => {
                 <XAxis dataKey="month" {...axisProps} />
                 <YAxis allowDecimals={false} {...axisProps} />
                 <Tooltip cursor={{ fill: cursorFill.indigo }} formatter={(v) => [v, 'Books']} />
-                <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="count" fill={neuHex.primary} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard icon={TrendingUp} title={`Pages Read — ${year}`} empty={!hasPagesActivity}>
+          <ChartCard
+            icon={TrendingUp}
+            eyebrow="Pages Immersed"
+            title={`Pages Read — ${year}`}
+            badge={hasPagesActivity ? `${totalPagesThisYear} Pages` : null}
+            empty={!hasPagesActivity}
+          >
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={overview.pagesPerMonth}
@@ -450,12 +545,17 @@ const Dashboard = () => {
                 <XAxis dataKey="month" {...axisProps} />
                 <YAxis allowDecimals={false} {...axisProps} />
                 <Tooltip cursor={{ fill: cursorFill.sky }} formatter={(v) => [v, 'Pages']} />
-                <Bar dataKey="pages" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="pages" fill={neuHex.secondary} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard icon={PieIcon} title="Genres Read (All Time)" empty={!hasGenres}>
+          <ChartCard
+            icon={PieIcon}
+            eyebrow="Taxonomy"
+            title="Genres Read (All Time)"
+            empty={!hasGenres}
+          >
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -471,14 +571,17 @@ const Dashboard = () => {
                   ))}
                 </Pie>
                 <Tooltip formatter={(v, n) => [v, n]} />
-                <Legend
-                  wrapperStyle={{ fontSize: 12, color: theme === 'dark' ? '#d1d5db' : '#374151' }}
-                />
+                <Legend wrapperStyle={{ fontSize: 12, color: neuHex.onSurfaceVariant }} />
               </PieChart>
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard icon={Star} title="Rating Distribution (All Time)" empty={!hasRatings}>
+          <ChartCard
+            icon={Star}
+            eyebrow="Critique Ledger"
+            title="Rating Distribution (All Time)"
+            empty={!hasRatings}
+          >
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={overview.ratingDistribution}

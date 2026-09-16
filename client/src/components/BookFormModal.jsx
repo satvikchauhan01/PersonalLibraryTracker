@@ -199,24 +199,28 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
 
   if (!isOpen) return null;
 
+  const inputClass =
+    'mt-1 block w-full rounded-neu-lg border-none bg-surface shadow-neu-inset-lg focus:shadow-neu-inset-focus focus:ring-0 p-3 text-on-surface placeholder:text-outline transition-all';
+  const labelClass = 'block text-xs font-semibold uppercase tracking-wider text-on-surface-variant';
+
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-      <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg p-6">
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
+    <div className="fixed inset-0 bg-black/50 overflow-y-auto z-50 flex items-start justify-center p-4 py-8">
+      <div className="relative bg-surface rounded-neu-xl shadow-neu-xl w-full max-w-lg p-6 my-auto">
+        <h3 className="font-display text-xl font-bold text-on-surface mb-6">
           {editingBook ? 'Edit Book Details' : 'Add New Book'}
         </h3>
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition duration-150"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-surface shadow-neu-xs hover:shadow-neu-inset-sm text-on-surface-variant flex items-center justify-center transition-all"
         >
-          <X size={24} />
+          <X size={16} />
         </button>
 
         {/* ── Lookup Section (add mode only) ────────────────────────────── */}
         {!editingBook && (
-          <div className="mb-6 pb-4 border-b dark:border-gray-800">
+          <div className="mb-6 pb-5 border-b border-outline-variant/20">
             {/* Tab switcher */}
-            <div className="flex space-x-1 mb-4 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+            <div className="grid grid-cols-2 gap-1.5 p-1 rounded-neu-lg bg-surface-container shadow-neu-inset-sm mb-4">
               {LOOKUP_TABS.map((tab) => (
                 <button
                   key={tab.id}
@@ -227,10 +231,10 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
                     setIsbnSuccess(false);
                     setSearchResults([]);
                   }}
-                  className={`flex-1 py-1.5 px-3 text-sm font-medium rounded-md transition duration-150 ${
+                  className={`py-1.5 px-3 text-sm font-semibold rounded-neu transition-all ${
                     activeTab === tab.id
-                      ? 'bg-white dark:bg-gray-700 text-indigo-700 dark:text-indigo-300 shadow'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                      ? 'bg-surface-container-low text-primary shadow-neu-xs'
+                      : 'text-on-surface-variant hover:text-on-surface'
                   }`}
                 >
                   {tab.label}
@@ -243,16 +247,13 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
               <div>
                 <label
                   htmlFor="isbnLookup"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  className="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-2"
                 >
                   Enter ISBN-10 or ISBN-13
                 </label>
-                <div className="flex space-x-2">
-                  <div className="relative flex-grow">
-                    <Hash
-                      size={16}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                    />
+                <div className="flex gap-2">
+                  <div className="relative flex-grow flex items-center gap-2 rounded-neu-lg bg-surface shadow-neu-inset-lg focus-within:shadow-neu-inset-focus px-3.5 py-2.5 transition-all">
+                    <Hash size={15} className="text-outline shrink-0" />
                     <input
                       type="text"
                       id="isbnLookup"
@@ -264,14 +265,14 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
                       }}
                       onKeyDown={handleIsbnKeyDown}
                       placeholder="e.g. 9780743273565"
-                      className="w-full pl-9 pr-4 py-2.5 rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                      className="w-full bg-transparent border-none p-0 text-sm text-on-surface placeholder:text-outline focus:outline-none focus:ring-0"
                     />
                   </div>
                   <button
                     type="button"
                     onClick={handleIsbnLookup}
                     disabled={isbnLooking || !isbnQuery.trim()}
-                    className="flex-shrink-0 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition duration-150"
+                    className="flex-shrink-0 inline-flex items-center px-4 py-2 text-sm font-bold rounded-full text-on-primary bg-primary shadow-neu-sm hover:shadow-neu-xs active:shadow-neu-inset disabled:opacity-50 transition-all"
                   >
                     {isbnLooking ? <Loader size={16} className="animate-spin" /> : 'Look up'}
                   </button>
@@ -279,13 +280,13 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
 
                 {/* Success / Error feedback */}
                 {isbnSuccess && (
-                  <p className="mt-2 flex items-center gap-1.5 text-sm text-green-600">
+                  <p className="mt-2 flex items-center gap-1.5 text-sm text-secondary">
                     <CheckCircle2 size={15} />
                     Book found! Form filled — review and save.
                   </p>
                 )}
                 {isbnError && (
-                  <p className="mt-2 flex items-center gap-1.5 text-sm text-amber-600">
+                  <p className="mt-2 flex items-center gap-1.5 text-sm text-amber-600 dark:text-amber-400">
                     <AlertCircle size={15} />
                     {isbnError}
                   </p>
@@ -298,24 +299,24 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
               <div>
                 <label
                   htmlFor="bookSearch"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  className="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-2"
                 >
                   Search for Book (Google Books API)
                 </label>
-                <div className="flex space-x-2">
+                <div className="flex gap-2">
                   <input
                     type="text"
                     id="bookSearch"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search by title or author..."
-                    className="flex-grow rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border text-sm"
+                    className="flex-grow rounded-neu-lg border-none bg-surface shadow-neu-inset-lg focus:shadow-neu-inset-focus focus:ring-0 p-3 text-sm text-on-surface placeholder:text-outline transition-all"
                   />
                   <button
                     type="button"
                     onClick={handleSearch}
                     disabled={isSearching || searchQuery.length < 3}
-                    className="flex-shrink-0 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 transition duration-150"
+                    className="flex-shrink-0 inline-flex items-center px-4 py-2 rounded-full text-on-primary bg-primary shadow-neu-sm hover:shadow-neu-xs active:shadow-neu-inset disabled:opacity-50 transition-all"
                   >
                     {isSearching ? (
                       <Loader size={18} className="animate-spin" />
@@ -325,19 +326,15 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
                   </button>
                 </div>
                 {searchResults.length > 0 && (
-                  <div className="mt-3 max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2 bg-gray-50 dark:bg-gray-800">
+                  <div className="mt-3 max-h-40 overflow-y-auto rounded-neu-lg p-2 bg-surface-container shadow-neu-inset-sm space-y-1">
                     {searchResults.map((book) => (
                       <div
                         key={book.id}
                         onClick={() => handleSelectBook(book)}
-                        className="p-2 border-b dark:border-gray-700 last:border-b-0 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 cursor-pointer rounded-md transition duration-150"
+                        className="p-2 hover:shadow-neu-inset-sm cursor-pointer rounded-neu-lg transition-all"
                       >
-                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                          {book.title}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 italic">
-                          by {book.author}
-                        </p>
+                        <p className="text-sm font-semibold text-on-surface">{book.title}</p>
+                        <p className="text-xs text-on-surface-variant italic">by {book.author}</p>
                       </div>
                     ))}
                   </div>
@@ -349,7 +346,7 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
 
         {/* ── Conflict / Submit Error ────────────────────────────────────── */}
         {submitError && (
-          <div className="mb-4 flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 p-3 text-sm text-red-700 dark:text-red-400">
+          <div className="mb-4 flex items-start gap-2 rounded-neu-lg bg-surface shadow-neu-inset-xs p-3 text-sm text-neu-error">
             <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
             <span>{submitError}</span>
           </div>
@@ -362,7 +359,7 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
               htmlFor="title"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              Title <span className="text-red-500">*</span>
+              Title <span className="text-neu-error">*</span>
             </label>
             <input
               type="text"
@@ -371,15 +368,12 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
               value={formState.title}
               onChange={handleInputChange}
               required
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
+              className={inputClass}
             />
           </div>
           <div>
-            <label
-              htmlFor="author"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Author <span className="text-red-500">*</span>
+            <label htmlFor="author" className={labelClass}>
+              Author <span className="text-neu-error">*</span>
             </label>
             <input
               type="text"
@@ -388,14 +382,11 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
               value={formState.author}
               onChange={handleInputChange}
               required
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
+              className={inputClass}
             />
           </div>
           <div>
-            <label
-              htmlFor="genre"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
+            <label htmlFor="genre" className={labelClass}>
               Genre
             </label>
             <input
@@ -404,7 +395,7 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
               id="genre"
               value={formState.genre}
               onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
+              className={inputClass}
             />
           </div>
 
@@ -412,12 +403,9 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
               spoiler-light AI summary than title/author/genre alone. Auto-filled
               by ISBN lookup / title search when the source has one. */}
           <div>
-            <label
-              htmlFor="description"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
+            <label htmlFor="description" className={labelClass}>
               Description{' '}
-              <span className="text-xs font-normal text-gray-400">
+              <span className="text-xs font-normal text-outline normal-case tracking-normal">
                 (optional — helps AI features)
               </span>
             </label>
@@ -429,17 +417,17 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
               rows={3}
               maxLength={2000}
               placeholder="A short blurb about the book..."
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border resize-none text-sm"
+              className={`${inputClass} resize-none text-sm`}
             />
           </div>
 
           {/* Phase 03: ISBN field (pre-filled from lookup, or manual entry) */}
           <div>
-            <label
-              htmlFor="isbn"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              ISBN <span className="text-xs font-normal text-gray-400">(optional)</span>
+            <label htmlFor="isbn" className={labelClass}>
+              ISBN{' '}
+              <span className="text-xs font-normal text-outline normal-case tracking-normal">
+                (optional)
+              </span>
             </label>
             <input
               type="text"
@@ -448,14 +436,12 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
               value={formState.isbn}
               onChange={handleInputChange}
               placeholder="e.g. 9780743273565"
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border font-mono text-sm"
+              className={`${inputClass} font-mono text-sm`}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Cover Image
-            </label>
+            <label className={`${labelClass} mb-2`}>Cover Image</label>
             <div className="flex items-start gap-4">
               <ImageUploadField
                 currentUrl={formState.coverUrl}
@@ -466,7 +452,7 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
                 onUploaded={(url) => setFormState((prev) => ({ ...prev, coverUrl: url }))}
               />
               <div className="flex-grow">
-                <label htmlFor="coverUrl" className="block text-xs text-gray-400 mb-1">
+                <label htmlFor="coverUrl" className="block text-xs text-outline mb-1">
                   or paste an image URL
                 </label>
                 <input
@@ -475,16 +461,13 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
                   id="coverUrl"
                   value={formState.coverUrl}
                   onChange={handleInputChange}
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm border"
+                  className={`${inputClass} !mt-0 py-2.5 text-sm`}
                 />
               </div>
             </div>
           </div>
           <div>
-            <label
-              htmlFor="status"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
+            <label htmlFor="status" className={labelClass}>
               Status
             </label>
             <select
@@ -492,7 +475,7 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
               id="status"
               value={formState.status}
               onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
+              className={inputClass}
             >
               <option value="wantToRead">Want to Read</option>
               <option value="reading">Reading</option>
@@ -505,11 +488,11 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
           {/* Phase 04: Page tracking fields */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label
-                htmlFor="totalPages"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Total Pages <span className="text-xs font-normal text-gray-400">(optional)</span>
+              <label htmlFor="totalPages" className={labelClass}>
+                Total Pages{' '}
+                <span className="text-xs font-normal text-outline normal-case tracking-normal">
+                  (optional)
+                </span>
               </label>
               <input
                 type="number"
@@ -519,15 +502,15 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
                 onChange={handleInputChange}
                 min="0"
                 placeholder="e.g. 320"
-                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
+                className={inputClass}
               />
             </div>
             <div>
-              <label
-                htmlFor="currentPage"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Current Page <span className="text-xs font-normal text-gray-400">(optional)</span>
+              <label htmlFor="currentPage" className={labelClass}>
+                Current Page{' '}
+                <span className="text-xs font-normal text-outline normal-case tracking-normal">
+                  (optional)
+                </span>
               </label>
               <input
                 type="number"
@@ -537,24 +520,24 @@ const BookFormModal = ({ isOpen, onClose, onSave, editingBook }) => {
                 onChange={handleInputChange}
                 min="0"
                 placeholder="e.g. 0"
-                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
+                className={inputClass}
               />
             </div>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
+          <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition duration-150"
+              className="px-4 py-2 rounded-full text-sm font-semibold text-on-surface bg-surface shadow-neu-xs hover:shadow-neu-inset-sm transition-all"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150"
+              className="inline-flex items-center px-4 py-2 text-sm font-bold rounded-full text-on-primary bg-primary shadow-neu-md hover:shadow-neu-sm active:shadow-neu-inset transition-all"
             >
-              <Save size={18} className="mr-2" />
+              <Save size={16} className="mr-2" />
               {editingBook ? 'Update Book' : 'Add Book'}
             </button>
           </div>

@@ -24,13 +24,14 @@ import { getPinStatus } from '../services/diaryService';
 import { getConversations } from '../services/messageService';
 import NotificationBell from './NotificationBell';
 
-const NAV_ITEMS = [
+// Diary lives on its own in the top bar (see JSX below) — everything else
+// lives behind the hamburger, in the slide-out sidebar.
+const SIDEBAR_ITEMS = [
   { to: '/', label: 'My Library', icon: Book },
   { to: '/shelves', label: 'Shelves', icon: Library },
   { to: '/dashboard', label: 'Dashboard', icon: Target },
   { to: '/friends', label: 'Friends', icon: Users },
   { to: '/messages', label: 'Messages', icon: MessageCircle, badge: 'chat' },
-  { to: '/diary', label: 'My Diary', icon: PenLine, lockable: true },
   { to: '/profile', label: 'My Profile', icon: User },
   { to: '/billing', label: 'Billing', icon: CreditCard },
 ];
@@ -41,11 +42,9 @@ const Navbar = () => {
   const { socket } = useSocket();
   const [diaryLocked, setDiaryLocked] = useState(false);
   const [chatUnread, setChatUnread] = useState(0);
-  // Phase 13 responsive fix: the 7-item nav had no mobile treatment at all —
-  // it simply overflowed the viewport width, forcing the entire page to
-  // scroll horizontally on any screen narrower than ~1000px. Below `md:` the
-  // links move into this collapsible panel instead.
-  const [mobileOpen, setMobileOpen] = useState(false);
+  // Standard-app pattern: the nav is hidden by default and only appears as a
+  // slide-out sidebar when the hamburger is clicked — never shown inline.
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -54,7 +53,7 @@ const Navbar = () => {
       .catch(() => {});
   }, [user]);
 
-  // Chat: total unread count across every conversation, for the nav badge.
+  // Chat: total unread count across every conversation, for the sidebar badge.
   // Refetched (not incrementally tracked) on any live chat event — same
   // "just refetch, don't hand-roll incremental state" approach NotificationBell
   // already uses for its own badge.
@@ -79,122 +78,205 @@ const Navbar = () => {
     };
   }, [socket, fetchChatUnread]);
 
-  // Close the mobile panel on every route change (NavLink click)
+  // Close the sidebar with Escape, same as clicking the backdrop
   useEffect(() => {
-    setMobileOpen(false);
-  }, []);
+    if (!sidebarOpen) return;
+    const onKeyDown = (e) => e.key === 'Escape' && setSidebarOpen(false);
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [sidebarOpen]);
 
-  const getNavLinkClass = ({ isActive }) =>
-    `px-3 py-2 text-sm font-medium rounded-md flex items-center ${
+  // Lock page scroll while the sidebar is open
+  useEffect(() => {
+    document.body.style.overflow = sidebarOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [sidebarOpen]);
+
+  const getDiaryLinkClass = ({ isActive }) =>
+    `px-3 py-1.5 rounded-full font-medium text-sm whitespace-nowrap flex items-center gap-1.5 transition-all ${
       isActive
-        ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300'
-        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+        ? 'shadow-neu-inset text-primary font-bold'
+        : 'text-on-surface-variant hover:text-on-surface shadow-neu'
     }`;
 
-  const getMobileNavLinkClass = ({ isActive }) =>
-    `px-3 py-2.5 text-sm font-medium rounded-md flex items-center w-full ${
+  const getSidebarLinkClass = ({ isActive }) =>
+    `px-4 py-3 rounded-neu-lg font-medium text-sm flex items-center gap-3 w-full transition-all ${
       isActive
-        ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300'
-        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+        ? 'shadow-neu-inset text-primary font-bold'
+        : 'text-on-surface-variant hover:text-on-surface hover:shadow-neu-xs'
     }`;
+
+  const initials = (user?.name || user?.email || 'U')
+    .split(' ')
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
 
   return (
-    <header className="bg-white dark:bg-gray-900 border-b border-transparent dark:border-gray-800 shadow-sm sticky top-0 z-20 transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="py-4 flex justify-between items-center gap-2">
-          <div className="flex items-center min-w-0">
-            <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white flex items-center flex-shrink-0">
-              <BookOpen className="w-8 h-8 text-indigo-600 mr-2" />
-            </h1>
-            {/* Full horizontal nav — md and up only */}
-            <nav className="hidden md:flex flex-wrap gap-x-1 gap-y-1 ml-4">
-              {NAV_ITEMS.map(({ to, label, icon: Icon, lockable, badge }) => (
-                <NavLink key={to} to={to} className={getNavLinkClass}>
-                  <Icon size={16} className="inline mr-1" />
-                  {label}
-                  {lockable && diaryLocked && (
-                    <Lock size={11} className="inline ml-1 text-indigo-400" />
-                  )}
-                  {badge === 'chat' && chatUnread > 0 && (
-                    <span className="ml-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
-                      {chatUnread > 9 ? '9+' : chatUnread}
-                    </span>
-                  )}
-                </NavLink>
-              ))}
-            </nav>
+    <>
+      <header className="fixed top-0 inset-x-0 z-40 px-3 lg:px-8 pt-2 bg-neu-background">
+        <div className="h-20 max-w-7xl mx-auto bg-surface-container-low rounded-neu-xl shadow-neu-lg px-3 sm:px-4 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0 shrink-0">
+            {/* Hamburger — opens the sidebar, always */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="w-9 h-9 rounded-full bg-surface-container-low shadow-neu-xs hover:shadow-neu-inset-sm flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-all shrink-0"
+              aria-label="Open navigation menu"
+              aria-expanded={sidebarOpen}
+            >
+              <Menu size={18} />
+            </button>
+            <BookOpen className="w-7 h-7 text-primary shrink-0" />
+            <div className="hidden sm:flex items-center gap-2 min-w-0">
+              <span className="font-display text-lg font-bold text-on-surface tracking-tight truncate">
+                Library Tracker
+              </span>
+              {user?.isPro && (
+                <span
+                  className="px-2 py-0.5 rounded-full bg-surface-container text-secondary text-[11px] font-bold shadow-neu-inset-xs flex items-center gap-1 shrink-0"
+                  title="Library Pro"
+                >
+                  <Sparkles size={11} /> Library Pro
+                </span>
+              )}
+            </div>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Diary stays in the top bar, per its own PIN-lock significance */}
+            <NavLink to="/diary" className={getDiaryLinkClass}>
+              <PenLine size={15} />
+              <span className="hidden sm:inline">My Diary</span>
+              {diaryLocked && <Lock size={11} className="text-tertiary" />}
+            </NavLink>
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="w-9 h-9 rounded-full bg-surface-container-low shadow-neu-xs hover:shadow-neu-inset-sm flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-all"
               title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
               aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             >
-              {theme === 'dark' ? <Sun size={19} /> : <Moon size={19} />}
+              {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
             </button>
             <NotificationBell />
-            <div className="hidden lg:flex text-sm font-medium text-gray-600 dark:text-gray-300 items-center gap-1.5">
-              Welcome, {user?.name || user?.email || 'User'}
-              {user?.isPro && (
-                <span
-                  className="inline-flex items-center gap-0.5 text-[11px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-white"
-                  title="Library Pro"
-                >
-                  <Sparkles size={11} /> PRO
-                </span>
-              )}
-            </div>
-            {/* Hamburger — below md only */}
-            <button
-              onClick={() => setMobileOpen((prev) => !prev)}
-              className="md:hidden p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-              aria-expanded={mobileOpen}
+            <NavLink
+              to="/profile"
+              className="hidden md:flex items-center gap-2 pl-2 rounded-full transition-all group"
+              title="View profile"
             >
-              {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
+              <div className="relative shrink-0">
+                {user?.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full object-cover shadow-neu-xs group-hover:shadow-neu-inset-sm transition-all"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-primary-container text-on-primary-container text-xs font-bold flex items-center justify-center shadow-neu-xs group-hover:shadow-neu-inset-sm transition-all">
+                    {initials}
+                  </div>
+                )}
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-secondary ring-2 ring-surface-container-low" />
+              </div>
+              <div className="flex flex-col text-left leading-none">
+                <span className="text-[11px] text-on-surface-variant">Welcome,</span>
+                <span className="text-sm font-bold text-on-surface group-hover:text-primary truncate max-w-[8rem] transition-colors">
+                  {user?.name || user?.email || 'User'}
+                </span>
+              </div>
+            </NavLink>
           </div>
         </div>
+      </header>
 
-        {/* Mobile nav panel */}
-        {mobileOpen && (
-          <nav className="md:hidden pb-4 flex flex-col gap-1">
-            {NAV_ITEMS.map(({ to, label, icon: Icon, lockable, badge }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={getMobileNavLinkClass}
-                onClick={() => setMobileOpen(false)}
-              >
-                <Icon size={16} className="inline mr-2" />
-                {label}
-                {lockable && diaryLocked && (
-                  <Lock size={11} className="inline ml-1.5 text-indigo-400" />
-                )}
-                {badge === 'chat' && chatUnread > 0 && (
-                  <span className="ml-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
-                    {chatUnread > 9 ? '9+' : chatUnread}
-                  </span>
-                )}
-              </NavLink>
-            ))}
-            <div className="lg:hidden px-3 pt-2 text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1.5 border-t dark:border-gray-800 mt-1">
-              Welcome, {user?.name || user?.email || 'User'}
+      {/* Backdrop */}
+      <div
+        onClick={() => setSidebarOpen(false)}
+        className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 ${
+          sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        aria-hidden="true"
+      />
+
+      {/* Sidebar drawer */}
+      <aside
+        className={`fixed top-0 left-0 z-50 h-full w-72 bg-surface-container-low shadow-neu-xl flex flex-col transition-transform duration-300 ease-out ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+        aria-hidden={!sidebarOpen}
+      >
+        <div className="h-20 px-4 flex items-center justify-between shrink-0 border-b border-outline-variant/20">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <BookOpen className="w-7 h-7 text-primary shrink-0" />
+            <span className="font-display text-lg font-bold text-on-surface tracking-tight truncate">
+              Library Tracker
+            </span>
+          </div>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="w-9 h-9 rounded-full bg-surface-container-low shadow-neu-xs hover:shadow-neu-inset-sm flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-all shrink-0"
+            aria-label="Close navigation menu"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <nav className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-1">
+          {SIDEBAR_ITEMS.map(({ to, label, icon: Icon, badge }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === '/'}
+              className={getSidebarLinkClass}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <Icon size={18} />
+              <span className="flex-1">{label}</span>
+              {badge === 'chat' && chatUnread > 0 && (
+                <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-neu-error text-on-neu-error text-[11px] font-bold flex items-center justify-center">
+                  {chatUnread > 9 ? '9+' : chatUnread}
+                </span>
+              )}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="p-4 border-t border-outline-variant/20 shrink-0">
+          <NavLink
+            to="/profile"
+            onClick={() => setSidebarOpen(false)}
+            className="flex items-center gap-2.5 rounded-neu-lg p-1.5 -m-1.5 hover:shadow-neu-inset-sm transition-all group"
+          >
+            <div className="relative shrink-0">
+              {user?.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt="Profile"
+                  className="w-9 h-9 rounded-full object-cover shadow-neu-xs"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-primary-container text-on-primary-container text-xs font-bold flex items-center justify-center shadow-neu-xs">
+                  {initials}
+                </div>
+              )}
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-secondary ring-2 ring-surface-container-low" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-on-surface group-hover:text-primary truncate transition-colors">
+                {user?.name || user?.email || 'User'}
+              </p>
               {user?.isPro && (
-                <span
-                  className="inline-flex items-center gap-0.5 text-[11px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-white"
-                  title="Library Pro"
-                >
-                  <Sparkles size={11} /> PRO
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-secondary">
+                  <Sparkles size={10} /> Library Pro
                 </span>
               )}
             </div>
-          </nav>
-        )}
-      </div>
-    </header>
+          </NavLink>
+        </div>
+      </aside>
+    </>
   );
 };
 

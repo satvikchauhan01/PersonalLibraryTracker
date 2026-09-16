@@ -286,14 +286,14 @@ const Library = () => {
   const openDetailModal = (book) => setDetailBook(book); // Phase 05
 
   if (loading && !books.length && page === 1) {
-    return <div className="text-xl font-semibold text-indigo-600">Loading Your Library...</div>;
+    return <div className="text-xl font-semibold text-primary">Loading Your Library...</div>;
   }
 
   return (
     <>
       {/* Reading stats */}
       <div className="mb-8">
-        <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-6">
+        <h2 className="font-display text-3xl font-extrabold text-on-surface mb-6">
           My Reading Stats
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -301,22 +301,41 @@ const Library = () => {
             label="Total Books"
             value={stats.total}
             icon={BookOpen}
-            color="text-indigo-600"
+            color="text-primary"
+            caption="in library"
+            captionColor="text-secondary"
           />
           <StatCard
             label="Want to Read"
             value={stats.wantToRead}
             icon={PlusCircle}
-            color="text-blue-500"
+            color="text-primary-container"
+            caption="curated"
           />
-          <StatCard label="Reading" value={stats.reading} icon={Book} color="text-yellow-500" />
+          <StatCard
+            label="Reading"
+            value={stats.reading}
+            icon={Book}
+            color="text-tertiary"
+            caption="in flow"
+            valueColor="text-tertiary"
+            captionColor="text-tertiary"
+          />
           <StatCard
             label="Completed"
             value={stats.completed}
             icon={CheckCircle}
-            color="text-green-500"
+            color="text-secondary"
+            caption="finished"
+            captionColor="text-secondary"
           />
-          <StatCard label="On Hold" value={stats.onHold} icon={Clock} color="text-gray-500" />
+          <StatCard
+            label="On Hold"
+            value={stats.onHold}
+            icon={Clock}
+            color="text-outline"
+            caption="paused"
+          />
         </div>
       </div>
 
@@ -329,77 +348,76 @@ const Library = () => {
       </div>
 
       {/* Status filters & search */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 border-b dark:border-gray-800 pb-4">
-        <div className="flex flex-wrap gap-2">
+      <div className="bg-surface rounded-neu-xl shadow-neu-lg p-4 lg:p-5 flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 xl:pb-0">
           {STATUSES.map((status) => (
             <button
               key={status.id}
               onClick={() => setActiveFilter(status.id)}
-              className={`flex items-center px-4 py-2 text-sm font-medium rounded-full transition duration-150 ${
+              className={`flex items-center px-4 py-2 text-sm font-medium rounded-full transition-all shrink-0 ${
                 activeFilter === status.id
-                  ? 'bg-indigo-600 text-white shadow-lg'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700'
+                  ? 'bg-surface shadow-neu-inset text-primary font-bold'
+                  : 'bg-surface shadow-neu hover:shadow-neu-inset text-on-surface-variant'
               }`}
             >
               <status.icon
                 size={16}
-                className={`mr-2 ${activeFilter !== status.id ? status.color : 'text-white'}`}
+                className={`mr-2 ${activeFilter === status.id ? 'text-primary' : status.color}`}
               />
               {status.label}
             </button>
           ))}
         </div>
 
-        <div className="flex gap-2">
-          <div className="relative w-full md:w-64">
-            <input
-              type="text"
-              placeholder="Search by title or author..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-full focus:ring-indigo-500 focus:border-indigo-500"
-            />
-            <Search
-              size={18}
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-            />
+        <div className="flex items-center gap-2 w-full xl:w-auto">
+          <div className="relative flex-1 xl:w-72">
+            <div className="h-11 w-full rounded-full bg-surface shadow-neu-inset-lg flex items-center px-4 gap-2 transition-shadow focus-within:shadow-neu-inset-focus">
+              <Search size={18} className="text-outline shrink-0" />
+              <input
+                type="text"
+                placeholder="Search by title or author..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="bg-transparent border-none outline-none text-sm text-on-surface placeholder:text-outline w-full leading-none focus:ring-0 p-0"
+              />
+            </div>
           </div>
           <button
             onClick={() => setShowMoreFilters((prev) => !prev)}
-            className={`flex-shrink-0 inline-flex items-center px-3 py-2 rounded-full border text-sm font-medium transition-colors ${
+            className={`flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all ${
               showMoreFilters || genreFilter || minRating || tagFilter
-                ? 'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
-                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                ? 'bg-surface shadow-neu-inset text-primary'
+                : 'bg-surface shadow-neu hover:shadow-neu-inset text-on-surface-variant hover:text-on-surface'
             }`}
             title="More filters"
           >
-            <SlidersHorizontal size={16} />
+            <SlidersHorizontal size={18} />
           </button>
           {/* Phase 18: natural-language search */}
           <button
             onClick={() => setShowAiSearch((prev) => !prev)}
-            className={`flex-shrink-0 inline-flex items-center px-3 py-2 rounded-full border text-sm font-medium transition-colors ${
+            className={`flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all ${
               showAiSearch
-                ? 'bg-purple-50 dark:bg-purple-950/50 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300'
-                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                ? 'bg-surface shadow-neu-inset text-tertiary'
+                : 'bg-surface shadow-neu hover:shadow-neu-inset text-tertiary'
             }`}
             title="Ask in plain English"
           >
-            <Sparkles size={16} />
+            <Sparkles size={18} />
           </button>
           <button
             onClick={() => setShowImportExport(true)}
-            className="flex-shrink-0 inline-flex items-center px-3 py-2 rounded-full border text-sm font-medium bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            className="flex-shrink-0 w-11 h-11 rounded-full bg-surface shadow-neu hover:shadow-neu-inset flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-all"
             title="Import / Export"
           >
-            <ArrowLeftRight size={16} />
+            <ArrowLeftRight size={18} />
           </button>
         </div>
       </div>
 
       {/* Phase 18: natural-language search panel */}
       {showAiSearch && (
-        <div className="mb-6 p-4 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-lg">
+        <div className="mb-6 p-4 bg-surface rounded-neu-xl shadow-neu-inset">
           <form onSubmit={handleAiSearch} className="flex gap-2">
             <input
               type="text"
@@ -407,12 +425,12 @@ const Library = () => {
               onChange={(e) => setAiQuery(e.target.value)}
               placeholder="e.g. short fantasy books I rated highly last year"
               autoFocus
-              className="flex-grow rounded-md border-purple-300 dark:border-purple-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm text-sm px-3 py-2 border focus:border-purple-500 focus:ring-purple-500"
+              className="flex-grow rounded-full border-none bg-surface shadow-neu-inset-lg focus:shadow-neu-inset-focus focus:ring-0 text-sm px-4 py-2 text-on-surface placeholder:text-outline"
             />
             <button
               type="submit"
               disabled={aiSearchLoading || !aiQuery.trim()}
-              className="flex-shrink-0 inline-flex items-center px-4 py-2 rounded-md bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 disabled:opacity-50"
+              className="flex-shrink-0 inline-flex items-center px-4 py-2 rounded-full bg-surface shadow-neu hover:shadow-neu-inset text-tertiary text-sm font-bold disabled:opacity-50 transition-all"
             >
               {aiSearchLoading ? (
                 <Loader2 size={16} className="animate-spin" />
@@ -421,35 +439,31 @@ const Library = () => {
               )}
             </button>
           </form>
-          {aiSearchError && (
-            <p className="mt-2 text-sm text-red-600 dark:text-red-400">{aiSearchError}</p>
-          )}
+          {aiSearchError && <p className="mt-2 text-sm text-neu-error">{aiSearchError}</p>}
         </div>
       )}
 
       {/* Phase 06: Genre / rating / sort filters */}
       {showMoreFilters && (
-        <div className="flex flex-wrap items-end gap-4 mb-6 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="flex flex-wrap items-end gap-4 mb-6 p-4 bg-surface rounded-neu-xl shadow-neu-lg">
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-              Genre
-            </label>
+            <label className="block text-xs font-medium text-on-surface-variant mb-1">Genre</label>
             <input
               type="text"
               value={genreFilter}
               onChange={(e) => setGenreFilter(e.target.value)}
               placeholder="e.g. Fantasy"
-              className="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm text-sm px-3 py-1.5 border focus:border-indigo-500 focus:ring-indigo-500"
+              className="rounded-neu border-none bg-surface shadow-neu-inset-lg focus:shadow-neu-inset-focus focus:ring-0 text-sm px-3 py-1.5 text-on-surface placeholder:text-outline"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            <label className="block text-xs font-medium text-on-surface-variant mb-1">
               Min. Rating
             </label>
             <select
               value={minRating}
               onChange={(e) => setMinRating(e.target.value)}
-              className="rounded-md border-gray-300 dark:border-gray-600 shadow-sm text-sm px-3 py-1.5 border bg-white dark:bg-gray-700 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500"
+              className="rounded-neu border-none bg-surface shadow-neu-inset-lg focus:shadow-neu-inset-focus focus:ring-0 text-sm px-3 py-1.5 text-on-surface"
             >
               <option value="">Any</option>
               {[4, 3, 2, 1].map((r) => (
@@ -460,25 +474,23 @@ const Library = () => {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-              Tag
-            </label>
+            <label className="block text-xs font-medium text-on-surface-variant mb-1">Tag</label>
             <input
               type="text"
               value={tagFilter}
               onChange={(e) => setTagFilter(e.target.value)}
               placeholder="e.g. cozy"
-              className="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm text-sm px-3 py-1.5 border focus:border-indigo-500 focus:ring-indigo-500"
+              className="rounded-neu border-none bg-surface shadow-neu-inset-lg focus:shadow-neu-inset-focus focus:ring-0 text-sm px-3 py-1.5 text-on-surface placeholder:text-outline"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            <label className="block text-xs font-medium text-on-surface-variant mb-1">
               Sort by
             </label>
             <select
               value={sortOption}
               onChange={(e) => setSortOption(e.target.value)}
-              className="rounded-md border-gray-300 dark:border-gray-600 shadow-sm text-sm px-3 py-1.5 border bg-white dark:bg-gray-700 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500"
+              className="rounded-neu border-none bg-surface shadow-neu-inset-lg focus:shadow-neu-inset-focus focus:ring-0 text-sm px-3 py-1.5 text-on-surface"
             >
               {SORT_OPTIONS.map((opt) => (
                 <option key={opt.id} value={opt.id}>
@@ -494,7 +506,7 @@ const Library = () => {
                 setMinRating('');
                 setTagFilter('');
               }}
-              className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 pb-1.5"
+              className="text-sm text-outline hover:text-on-surface pb-1.5 transition-colors"
             >
               Clear
             </button>
@@ -503,16 +515,16 @@ const Library = () => {
       )}
 
       {/* Book list */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <h2 className="font-display text-2xl font-bold text-on-surface tracking-tight">
           {STATUSES.find((s) => s.id === activeFilter)?.label}
-          <span className="text-base font-normal text-gray-400 ml-2">
+          <span className="text-base font-normal text-on-surface-variant ml-2">
             {pagination.total} book{pagination.total === 1 ? '' : 's'}
           </span>
         </h2>
         <button
           onClick={openAddModal}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150"
+          className="inline-flex items-center px-5 py-2.5 rounded-full bg-surface shadow-neu-md hover:shadow-neu-inset text-primary font-bold text-sm transition-all self-start sm:self-auto"
         >
           <PlusCircle size={18} className="mr-2" />
           Add New Book
@@ -520,14 +532,14 @@ const Library = () => {
       </div>
 
       {books.length === 0 ? (
-        <div className="text-center py-10 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-          <BookOpen className="w-12 h-12 text-gray-400 mx-auto" />
-          <p className="mt-4 text-xl font-medium text-gray-500 dark:text-gray-400">
+        <div className="text-center py-10 bg-surface rounded-neu-xl shadow-neu-lg">
+          <BookOpen className="w-12 h-12 text-outline mx-auto" />
+          <p className="mt-4 text-xl font-medium text-on-surface-variant">
             No books matching your criteria.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="flex flex-col gap-4">
           {books.map((book) => (
             <BookCard
               key={book._id}

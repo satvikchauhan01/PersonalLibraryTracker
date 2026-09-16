@@ -37,6 +37,24 @@ const GENRE_OPTIONS = [
   'Comics & Manga',
 ];
 
+// Neumorphic redesign ("Tactile Bibliotheca"): each field is an icon +
+// input pair inside a single inset "channel", not a label-above-bordered-box
+// — matches Stitch's Auth mock. `icon` renders inline at the left.
+const Field = ({ icon: Icon, label, action, children }) => (
+  <div>
+    <div className="flex items-center justify-between mb-1.5">
+      <label className="text-xs font-bold tracking-wide uppercase text-on-surface-variant">
+        {label}
+      </label>
+      {action}
+    </div>
+    <div className="relative flex items-center gap-3 rounded-neu-lg bg-surface shadow-neu-inset-lg focus-within:shadow-neu-inset-focus px-4 py-3 transition-all">
+      <Icon size={16} className="text-outline shrink-0" />
+      {children}
+    </div>
+  </div>
+);
+
 const AuthScreen = () => {
   const [isLogin, setIsLogin] = useState(true);
 
@@ -161,21 +179,22 @@ const AuthScreen = () => {
     }
   };
 
-  // Shared input styling
-  const inputClass =
-    'mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-800 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 p-3 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-200';
+  const fieldInputClass =
+    'w-full bg-transparent border-none p-0 text-sm text-on-surface placeholder:text-outline focus:outline-none focus:ring-0';
+  const selectClass =
+    'w-full bg-surface border-none text-sm text-on-surface shadow-neu-inset-lg focus:shadow-neu-inset-focus focus:ring-0 rounded-neu-lg px-4 py-3 transition-all';
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 p-4">
-      <div className="max-w-md w-full bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-neu-background p-4">
+      <div className="max-w-md w-full bg-surface rounded-neu-xl shadow-neu-xl overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-6 text-center">
-          <div className="flex justify-center mb-3">
-            <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-              <BookOpen className="w-8 h-8 text-white" />
+        <div className="px-8 pt-8 pb-6 text-center">
+          <div className="flex justify-center mb-4">
+            <div className="w-14 h-14 rounded-neu-lg bg-surface-container-low shadow-neu-lg flex items-center justify-center">
+              <BookOpen className="w-7 h-7 text-primary" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-white">
+          <h2 className="font-display text-2xl font-bold text-on-surface">
             {isLogin
               ? showForgotPassword
                 ? 'Reset Password'
@@ -184,7 +203,7 @@ const AuthScreen = () => {
                 ? 'Create Your Account'
                 : 'Almost There!'}
           </h2>
-          <p className="text-indigo-100 text-sm mt-1">
+          <p className="text-on-surface-variant text-sm mt-1">
             {isLogin
               ? showForgotPassword
                 ? "Enter your email and we'll send you a reset link."
@@ -196,23 +215,23 @@ const AuthScreen = () => {
 
           {/* Step indicator for registration */}
           {!isLogin && (
-            <div className="flex items-center justify-center gap-2 mt-4">
+            <div className="flex items-center justify-center gap-2 mt-5">
               <div
-                className={`flex items-center gap-1.5 text-xs font-medium ${step === 1 ? 'text-white' : 'text-indigo-200'}`}
+                className={`flex items-center gap-1.5 text-xs font-medium ${step === 1 ? 'text-primary' : 'text-on-surface-variant'}`}
               >
                 <span
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === 1 ? 'bg-white text-indigo-600' : 'bg-white/30 text-white'}`}
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === 1 ? 'bg-primary text-on-primary shadow-neu-xs' : 'bg-surface-container shadow-neu-inset-xs'}`}
                 >
                   {step > 1 ? <CheckCircle size={14} /> : '1'}
                 </span>
                 Required
               </div>
-              <div className="w-8 h-px bg-indigo-300" />
+              <div className="w-8 h-px bg-outline-variant" />
               <div
-                className={`flex items-center gap-1.5 text-xs font-medium ${step === 2 ? 'text-white' : 'text-indigo-300'}`}
+                className={`flex items-center gap-1.5 text-xs font-medium ${step === 2 ? 'text-primary' : 'text-on-surface-variant'}`}
               >
                 <span
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === 2 ? 'bg-white text-indigo-600' : 'bg-white/20 text-indigo-200'}`}
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === 2 ? 'bg-primary text-on-primary shadow-neu-xs' : 'bg-surface-container shadow-neu-inset-xs'}`}
                 >
                   2
                 </span>
@@ -223,9 +242,9 @@ const AuthScreen = () => {
         </div>
 
         {/* Body */}
-        <div className="px-8 py-6">
+        <div className="px-8 pb-8">
           {error && (
-            <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl mb-5 flex items-center">
+            <div className="bg-surface shadow-neu-inset-xs text-neu-error px-4 py-3 rounded-neu-lg mb-5 flex items-center">
               <AlertTriangle size={18} className="mr-2 flex-shrink-0" />
               <span className="text-sm">{error}</span>
             </div>
@@ -234,13 +253,7 @@ const AuthScreen = () => {
           {/* ─── LOGIN FORM ─── */}
           {isLogin && !showForgotPassword && (
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label
-                  htmlFor="login-email"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
-                >
-                  <Mail size={14} className="text-gray-400" /> Email address
-                </label>
+              <Field icon={Mail} label="Email address">
                 <input
                   id="login-email"
                   type="email"
@@ -248,54 +261,49 @@ const AuthScreen = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className={inputClass}
+                  className={fieldInputClass}
                   placeholder="you@example.com"
                 />
-              </div>
-              <div>
-                <div className="flex items-center justify-between">
-                  <label
-                    htmlFor="login-password"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
-                  >
-                    <Lock size={14} className="text-gray-400" /> Password
-                  </label>
+              </Field>
+              <Field
+                icon={Lock}
+                label="Password"
+                action={
                   <button
                     type="button"
                     onClick={() => {
                       setShowForgotPassword(true);
                       setError(null);
                     }}
-                    className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors"
+                    className="text-xs font-semibold text-primary hover:underline"
                   >
                     Forgot password?
                   </button>
-                </div>
-                <div className="relative">
-                  <input
-                    id="login-password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="current-password"
-                    required
-                    minLength="6"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className={inputClass + ' pr-10'}
-                    placeholder="••••••••"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
+                }
+              >
+                <input
+                  id="login-password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  required
+                  minLength="6"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={fieldInputClass}
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-outline hover:text-on-surface-variant shrink-0"
+                >
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
+              </Field>
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-3 px-4 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50 transition-all duration-200"
+                className="w-full flex justify-center py-3.5 px-4 rounded-full text-sm font-bold text-on-primary bg-primary shadow-neu-md hover:shadow-neu-sm active:shadow-neu-inset disabled:opacity-50 transition-all duration-200"
               >
                 {loading ? <Loader size={20} className="animate-spin" /> : 'Sign In'}
               </button>
@@ -307,21 +315,15 @@ const AuthScreen = () => {
             <div className="space-y-5">
               {forgotSent ? (
                 <div className="text-center py-4">
-                  <MailCheck size={36} className="text-emerald-500 mx-auto mb-3" />
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    If <strong>{forgotEmail}</strong> is registered, a reset link is on its way.
-                    Check your inbox — the link expires in 30 minutes.
+                  <MailCheck size={36} className="text-secondary mx-auto mb-3" />
+                  <p className="text-sm text-on-surface-variant">
+                    If <strong className="text-on-surface">{forgotEmail}</strong> is registered, a
+                    reset link is on its way. Check your inbox — the link expires in 30 minutes.
                   </p>
                 </div>
               ) : (
                 <form onSubmit={handleForgotPassword} className="space-y-5">
-                  <div>
-                    <label
-                      htmlFor="forgot-email"
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
-                    >
-                      <Mail size={14} className="text-gray-400" /> Email address
-                    </label>
+                  <Field icon={Mail} label="Email address">
                     <input
                       id="forgot-email"
                       type="email"
@@ -329,14 +331,14 @@ const AuthScreen = () => {
                       required
                       value={forgotEmail}
                       onChange={(e) => setForgotEmail(e.target.value)}
-                      className={inputClass}
+                      className={fieldInputClass}
                       placeholder="you@example.com"
                     />
-                  </div>
+                  </Field>
                   <button
                     type="submit"
                     disabled={forgotLoading}
-                    className="w-full flex justify-center py-3 px-4 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50 transition-all duration-200"
+                    className="w-full flex justify-center py-3.5 px-4 rounded-full text-sm font-bold text-on-primary bg-primary shadow-neu-md hover:shadow-neu-sm active:shadow-neu-inset disabled:opacity-50 transition-all duration-200"
                   >
                     {forgotLoading ? (
                       <Loader size={20} className="animate-spin" />
@@ -354,7 +356,7 @@ const AuthScreen = () => {
                   setForgotEmail('');
                   setError(null);
                 }}
-                className="w-full flex items-center justify-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 font-medium py-2 transition-colors"
+                className="w-full flex items-center justify-center gap-1.5 text-sm text-on-surface-variant hover:text-on-surface font-medium py-2 transition-colors"
               >
                 <ArrowLeft size={14} /> Back to Sign In
               </button>
@@ -364,14 +366,7 @@ const AuthScreen = () => {
           {/* ─── REGISTER STEP 1: Required Fields ─── */}
           {!isLogin && step === 1 && (
             <form onSubmit={handleNextStep} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="reg-name"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
-                >
-                  <User size={14} className="text-gray-400" /> Full Name{' '}
-                  <span className="text-red-400">*</span>
-                </label>
+              <Field icon={User} label="Full Name *">
                 <input
                   id="reg-name"
                   type="text"
@@ -379,18 +374,11 @@ const AuthScreen = () => {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className={inputClass}
-                  placeholder="Satvik Chauhan"
+                  className={fieldInputClass}
+                  placeholder="Your full name"
                 />
-              </div>
-              <div>
-                <label
-                  htmlFor="reg-email"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
-                >
-                  <Mail size={14} className="text-gray-400" /> Email address{' '}
-                  <span className="text-red-400">*</span>
-                </label>
+              </Field>
+              <Field icon={Mail} label="Email address *">
                 <input
                   id="reg-email"
                   type="email"
@@ -398,47 +386,31 @@ const AuthScreen = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className={inputClass}
+                  className={fieldInputClass}
                   placeholder="you@example.com"
                 />
-              </div>
-              <div>
-                <label
-                  htmlFor="reg-password"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
+              </Field>
+              <Field icon={Lock} label="Password *">
+                <input
+                  id="reg-password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  required
+                  minLength="6"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={fieldInputClass}
+                  placeholder="Min 6 characters"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-outline hover:text-on-surface-variant shrink-0"
                 >
-                  <Lock size={14} className="text-gray-400" /> Password{' '}
-                  <span className="text-red-400">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    id="reg-password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="new-password"
-                    required
-                    minLength="6"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className={inputClass + ' pr-10'}
-                    placeholder="Min 6 characters"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label
-                  htmlFor="reg-confirm-password"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
-                >
-                  <Lock size={14} className="text-gray-400" /> Confirm Password{' '}
-                  <span className="text-red-400">*</span>
-                </label>
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
+              </Field>
+              <Field icon={Lock} label="Confirm Password *">
                 <input
                   id="reg-confirm-password"
                   type={showPassword ? 'text' : 'password'}
@@ -447,13 +419,13 @@ const AuthScreen = () => {
                   minLength="6"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className={inputClass}
+                  className={fieldInputClass}
                   placeholder="Re-enter your password"
                 />
-              </div>
+              </Field>
               <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-indigo-500/30 transition-all duration-200"
+                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-full text-sm font-bold text-on-primary bg-primary shadow-neu-md hover:shadow-neu-sm active:shadow-neu-inset transition-all duration-200"
               >
                 Continue <ArrowRight size={16} />
               </button>
@@ -463,35 +435,26 @@ const AuthScreen = () => {
           {/* ─── REGISTER STEP 2: Optional Fields ─── */}
           {!isLogin && step === 2 && (
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="reg-phone"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
-                >
-                  <Phone size={14} className="text-gray-400" /> Phone Number
-                </label>
+              <Field icon={Phone} label="Phone Number">
                 <input
                   id="reg-phone"
                   type="tel"
                   autoComplete="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className={inputClass}
+                  className={fieldInputClass}
                   placeholder="+91 98765 43210"
                 />
-              </div>
+              </Field>
               <div>
-                <label
-                  htmlFor="reg-genre"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
-                >
-                  <BookMarked size={14} className="text-gray-400" /> Favorite Genre
+                <label className="text-xs font-bold tracking-wide uppercase text-on-surface-variant flex items-center gap-1.5 mb-1.5">
+                  <BookMarked size={13} /> Favorite Genre
                 </label>
                 <select
                   id="reg-genre"
                   value={favoriteGenre}
                   onChange={(e) => setFavoriteGenre(e.target.value)}
-                  className={inputClass}
+                  className={selectClass}
                 >
                   <option value="">— Select a genre (optional) —</option>
                   {GENRE_OPTIONS.map((g) => (
@@ -502,11 +465,8 @@ const AuthScreen = () => {
                 </select>
               </div>
               <div>
-                <label
-                  htmlFor="reg-bio"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
-                >
-                  <FileText size={14} className="text-gray-400" /> Short Bio
+                <label className="text-xs font-bold tracking-wide uppercase text-on-surface-variant flex items-center gap-1.5 mb-1.5">
+                  <FileText size={13} /> Short Bio
                 </label>
                 <textarea
                   id="reg-bio"
@@ -514,24 +474,24 @@ const AuthScreen = () => {
                   onChange={(e) => setBio(e.target.value)}
                   maxLength={280}
                   rows={3}
-                  className={inputClass + ' resize-none'}
+                  className={`${selectClass} resize-none`}
                   placeholder="A book lover who enjoys rainy evenings and fiction…"
                 />
-                <p className="text-xs text-gray-400 text-right mt-1">{bio.length}/280</p>
+                <p className="text-xs text-outline text-right mt-1">{bio.length}/280</p>
               </div>
 
               <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="flex items-center justify-center gap-1.5 flex-1 py-3 px-4 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="flex items-center justify-center gap-1.5 flex-1 py-3 px-4 rounded-full text-sm font-bold text-on-surface bg-surface shadow-neu-xs hover:shadow-neu-inset-sm transition-all"
                 >
                   <ArrowLeft size={16} /> Back
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 flex justify-center py-3 px-4 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50 transition-all duration-200"
+                  className="flex-1 flex justify-center py-3 px-4 rounded-full text-sm font-bold text-on-primary bg-primary shadow-neu-md hover:shadow-neu-sm active:shadow-neu-inset disabled:opacity-50 transition-all duration-200"
                 >
                   {loading ? <Loader size={20} className="animate-spin" /> : 'Create Account'}
                 </button>
@@ -541,7 +501,7 @@ const AuthScreen = () => {
                 type="button"
                 disabled={loading}
                 onClick={handleSkipAndRegister}
-                className="w-full text-center text-sm text-indigo-600 hover:text-indigo-800 font-medium py-2 transition-colors"
+                className="w-full text-center text-sm text-primary hover:underline font-semibold py-2 transition-colors"
               >
                 Skip for now →
               </button>
@@ -550,14 +510,14 @@ const AuthScreen = () => {
 
           {/* Toggle Login / Signup */}
           {!(isLogin && showForgotPassword) && (
-            <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+            <p className="mt-6 text-center text-sm text-on-surface-variant">
               {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
               <button
                 onClick={() => {
                   setIsLogin(!isLogin);
                   resetForm();
                 }}
-                className="font-semibold text-indigo-600 hover:text-indigo-500 transition-colors"
+                className="font-bold text-primary hover:underline transition-colors"
               >
                 {isLogin ? 'Sign Up' : 'Sign In'}
               </button>

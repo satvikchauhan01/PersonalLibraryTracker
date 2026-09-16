@@ -4,11 +4,13 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 // Phase 13: one pagination control, reused everywhere a list is paged
 // server-side (Library, the friend activity feed, the notification inbox)
 // instead of each screen reinventing its own prev/next buttons.
+// Neumorphic redesign ("Tactile Bibliotheca"): extruded pill buttons that
+// press into an inset/debossed state instead of flattening to a filled bg.
 const Pagination = ({ page, totalPages, onChange, size = 'md', className = '' }) => {
   if (totalPages <= 1) return null;
 
   const compact = size === 'sm';
-  const btnClass = `inline-flex items-center rounded-full border border-gray-300 dark:border-gray-700 font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors ${
+  const btnClass = `inline-flex items-center rounded-full bg-surface shadow-neu hover:shadow-neu-inset active:shadow-neu-inset font-medium text-on-surface-variant hover:text-on-surface disabled:opacity-40 disabled:hover:shadow-neu disabled:cursor-not-allowed transition-all ${
     compact ? 'px-2 py-1 text-xs' : 'px-3 py-2 text-sm'
   }`;
 
@@ -23,7 +25,7 @@ const Pagination = ({ page, totalPages, onChange, size = 'md', className = '' })
       >
         <ChevronLeft size={compact ? 13 : 16} className="mr-1" /> Prev
       </button>
-      <span className={`text-gray-500 dark:text-gray-400 ${compact ? 'text-xs' : 'text-sm'}`}>
+      <span className={`text-on-surface-variant ${compact ? 'text-xs' : 'text-sm'}`}>
         Page {page} of {totalPages}
       </span>
       <button

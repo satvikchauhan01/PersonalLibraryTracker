@@ -19,18 +19,18 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <Loader size={32} className="animate-spin text-indigo-600" />
+      <div className="min-h-screen flex items-center justify-center bg-neu-background">
+        <Loader size={32} className="animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 font-sans transition-colors">
+    <div className="min-h-screen bg-neu-background font-sans transition-colors">
       {user ? (
         <>
           <Navbar />
-          <main className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+          <main className="max-w-7xl mx-auto pt-28 pb-12 px-4 sm:px-6 lg:px-8">
             <Routes>
               <Route path="/" element={<Library />} />
               <Route path="/shelves" element={<Shelves />} />
