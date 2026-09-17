@@ -62,6 +62,13 @@ body {
   --neu-background: #f6faff;
   --neu-on-background: #171c20;
 
+  /* Heatmap intensity levels — classic crisp vibrant greens (matching reference light mode) */
+  --neu-heatmap-0: #ebedf0;          /* empty / no activity */
+  --neu-heatmap-1: #9be9a8;          /* level 1: light fresh mint */
+  --neu-heatmap-2: #40c463;          /* level 2: medium vivid green */
+  --neu-heatmap-3: #30a14e;          /* level 3: rich vibrant green */
+  --neu-heatmap-4: #216e39;          /* level 4: deep forest green */
+
   /* Extruded (convex) surfaces: soft white highlight top-left, diffuse
      cool-gray shadow bottom-right — a light source from the upper-left. */
   --neu-shadow-xs: -2px -2px 5px #ffffff, 2px 2px 5px rgba(166, 175, 195, 0.4);
@@ -115,6 +122,13 @@ body {
   --neu-on-error-container: #ffdad6;
   --neu-background: #15171d;
   --neu-on-background: #e3e2e6;
+
+  /* Heatmap intensity levels — dark and vibrant greens (matching reference dark mode) */
+  --neu-heatmap-0: #21262d;          /* empty: clean dark charcoal tile */
+  --neu-heatmap-1: #0e4429;          /* level 1: deep dark forest emerald */
+  --neu-heatmap-2: #006d32;          /* level 2: medium vibrant forest green */
+  --neu-heatmap-3: #26a641;          /* level 3: bright vibrant green */
+  --neu-heatmap-4: #39d353;          /* level 4: brilliant electric luminous green */
 
   /* Same convex/debossed logic, but a dark surface's "light source" is a
      faint lift (translucent white), not a true highlight, and its shadow is

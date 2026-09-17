@@ -15,16 +15,15 @@ const buildDateRange = (days = 365) => {
   return result;
 };
 
-// Color intensity based on pages read — neumorphic redesign: one token
-// (secondary, the "sage" accent) at increasing opacity instead of 5 separate
-// hard-coded Tailwind swatches, so this stays in sync with the design tokens
-// automatically (light or dark) rather than needing its own palette.
+// Color intensity based on pages read — uses dedicated heatmap CSS tokens
+// (explicit rgba per level) so Tailwind opacity modifiers are not needed.
+// Tokens are defined in index.css and adapt automatically to .dark.
 const getColor = (pages) => {
-  if (!pages || pages === 0) return 'bg-surface-container-highest';
-  if (pages < 20) return 'bg-secondary/30';
-  if (pages < 50) return 'bg-secondary/55';
-  if (pages < 100) return 'bg-secondary/80';
-  return 'bg-secondary';
+  if (!pages || pages === 0) return 'bg-heatmap-0';
+  if (pages < 20) return 'bg-heatmap-1';
+  if (pages < 50) return 'bg-heatmap-2';
+  if (pages < 100) return 'bg-heatmap-3';
+  return 'bg-heatmap-4';
 };
 
 const MONTH_LABELS = [
@@ -197,15 +196,11 @@ const ReadingCalendar = ({ refreshTrigger }) => {
           {/* Legend */}
           <div className="flex items-center gap-1 mt-2 ml-8">
             <span className="text-xs text-on-surface-variant mr-1">Less</span>
-            {[
-              'bg-surface-container-highest',
-              'bg-secondary/30',
-              'bg-secondary/55',
-              'bg-secondary/80',
-              'bg-secondary',
-            ].map((c) => (
-              <div key={c} className={`w-3.5 h-3.5 rounded-sm ${c}`} />
-            ))}
+            {['bg-heatmap-0', 'bg-heatmap-1', 'bg-heatmap-2', 'bg-heatmap-3', 'bg-heatmap-4'].map(
+              (c) => (
+                <div key={c} className={`w-3.5 h-3.5 rounded-sm ${c}`} />
+              )
+            )}
             <span className="text-xs text-on-surface-variant ml-1">More</span>
           </div>
         </div>

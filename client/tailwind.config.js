@@ -56,6 +56,13 @@ module.exports = {
         'on-neu-error-container': 'var(--neu-on-error-container)',
         'neu-background': 'var(--neu-background)',
         'on-neu-background': 'var(--neu-on-background)',
+        // Heatmap-specific tokens — explicit rgba per level, works in both
+        // light and dark without the broken Tailwind /opacity-on-CSS-var trick.
+        'heatmap-0': 'var(--neu-heatmap-0)',
+        'heatmap-1': 'var(--neu-heatmap-1)',
+        'heatmap-2': 'var(--neu-heatmap-2)',
+        'heatmap-3': 'var(--neu-heatmap-3)',
+        'heatmap-4': 'var(--neu-heatmap-4)',
       },
       // Same var()-driven trick for the neumorphic shadow recipes themselves
       // — each name below is one "tactile" state from the design system

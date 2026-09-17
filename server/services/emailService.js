@@ -26,11 +26,29 @@ const wrapper = (bodyHtml) => `
 const sendEmail = async ({ to, subject, html }) => {
   const resend = getResend();
   if (!resend) {
-    console.warn(`[email] Resend not configured — skipped "${subject}" to ${to}`);
+    console.warn(
+      `[email] Resend not configured (RESEND_API_KEY missing) — skipped "${subject}" to ${to}`
+    );
     return null;
   }
   try {
-    return await resend.emails.send({ from: FROM_EMAIL, to, subject, html: wrapper(html) });
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject,
+      html: wrapper(html),
+    });
+
+    if (error) {
+      console.error(
+        `[email] Resend API error sending "${subject}" to ${to}:`,
+        error.message || error
+      );
+      return null;
+    }
+
+    console.log(`[email] Sent "${subject}" to ${to} (id: ${data?.id})`);
+    return data;
   } catch (error) {
     console.error('[email] send failed:', error.message);
     return null;
