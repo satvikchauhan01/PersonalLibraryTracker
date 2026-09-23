@@ -28,6 +28,12 @@ const protect = async (req, res, next) => {
       return res.status(401).json({ message: 'Not authorized, user not found' });
     }
 
+    // A ban takes effect immediately, not just on next login — even though
+    // the access token itself is still valid for up to 15 more minutes.
+    if (req.user.isBanned) {
+      return res.status(403).json({ message: 'Your account has been suspended.' });
+    }
+
     // Phase 17: every Sentry capture for the rest of this request — whether
     // an explicit controller-level captureException or the Express error
     // handler catching something further down the chain — now carries

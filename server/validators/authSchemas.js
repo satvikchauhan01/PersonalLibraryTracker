@@ -66,3 +66,18 @@ export const resetPasswordSchema = z.object({
     .string({ required_error: 'Password is required' })
     .min(6, 'Password must be at least 6 characters'),
 });
+
+// Admin RBAC actions
+export const updateUserRoleSchema = z.object({
+  role: z.enum(['user', 'admin'], { required_error: 'Role is required' }),
+});
+
+export const updateUserBanSchema = z.object({
+  isBanned: z.boolean({ required_error: 'isBanned is required' }),
+  reason: z
+    .string()
+    .trim()
+    .max(280, 'Reason must be at most 280 characters')
+    .optional()
+    .default(''),
+});

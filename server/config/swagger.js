@@ -69,6 +69,8 @@ const definition = {
           name: { type: 'string' },
           email: { type: 'string', format: 'email' },
           role: { type: 'string', enum: ['user', 'admin'] },
+          isBanned: { type: 'boolean' },
+          banReason: { type: 'string' },
           phone: { type: 'string' },
           bio: { type: 'string' },
           favoriteGenre: { type: 'string' },

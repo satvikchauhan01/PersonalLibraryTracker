@@ -16,6 +16,7 @@ import {
   Moon,
   Menu,
   X,
+  ShieldCheck,
 } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -35,6 +36,8 @@ const SIDEBAR_ITEMS = [
   { to: '/profile', label: 'My Profile', icon: User },
   { to: '/billing', label: 'Billing', icon: CreditCard },
 ];
+
+const ADMIN_ITEM = { to: '/admin', label: 'Admin Panel', icon: ShieldCheck };
 
 const Navbar = () => {
   const { user } = useContext(AuthContext);
@@ -107,6 +110,8 @@ const Navbar = () => {
         ? 'shadow-neu-inset text-primary font-bold'
         : 'text-on-surface-variant hover:text-on-surface hover:shadow-neu-xs'
     }`;
+
+  const sidebarItems = user?.role === 'admin' ? [...SIDEBAR_ITEMS, ADMIN_ITEM] : SIDEBAR_ITEMS;
 
   const initials = (user?.name || user?.email || 'U')
     .split(' ')
@@ -224,7 +229,7 @@ const Navbar = () => {
         </div>
 
         <nav className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-1">
-          {SIDEBAR_ITEMS.map(({ to, label, icon: Icon, badge }) => (
+          {sidebarItems.map(({ to, label, icon: Icon, badge }) => (
             <NavLink
               key={to}
               to={to}

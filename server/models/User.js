@@ -25,6 +25,20 @@ const userSchema = mongoose.Schema(
       enum: ['user', 'admin'],
       default: 'user',
     },
+    // Admin moderation: a banned user can't log in or use an existing
+    // session (see authMiddleware.protect and authController.loginUser).
+    isBanned: {
+      type: Boolean,
+      default: false,
+    },
+    banReason: {
+      type: String,
+      default: '',
+    },
+    bannedAt: {
+      type: Date,
+      default: null,
+    },
     phone: {
       type: String,
       default: '',

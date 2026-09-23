@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Friends from './pages/Friends';
 import Messages from './pages/Messages';
 import Billing from './pages/Billing';
+import Admin from './pages/Admin';
 import ResetPassword from './pages/ResetPassword'; // Phase 12
 import AuthScreen from './components/AuthScreen';
 import Navbar from './components/Navbar';
@@ -40,6 +41,10 @@ function App() {
               <Route path="/billing" element={<Billing />} />
               <Route path="/diary" element={<Diary />} />
               <Route path="/profile" element={<Profile />} />
+              <Route
+                path="/admin"
+                element={user.role === 'admin' ? <Admin /> : <Navigate to="/" />}
+              />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </main>

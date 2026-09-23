@@ -11,6 +11,9 @@ import {
   forgotPassword,
   resetPassword,
   getAdminStats,
+  listUsers,
+  updateUserRole,
+  updateUserBanStatus,
 } from '../controllers/authController.js';
 import protect from '../middleware/authMiddleware.js';
 import authorize from '../middleware/authorize.js';
@@ -22,6 +25,8 @@ import {
   notificationPrefsSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  updateUserRoleSchema,
+  updateUserBanSchema,
 } from '../validators/authSchemas.js';
 
 const router = express.Router();
@@ -291,10 +296,136 @@ router.patch(
  *           application/json:
  *             schema:
  *               type: object
- *               properties: { totalUsers: { type: integer } }
+ *               properties:
+ *                 totalUsers: { type: integer }
+ *                 totalAdmins: { type: integer }
+ *                 bannedUsers: { type: integer }
+ *                 proUsers: { type: integer }
+ *                 totalBooks: { type: integer }
+ *                 newUsersThisWeek: { type: integer }
  *       401: { $ref: '#/components/responses/Unauthorized' }
  *       403: { $ref: '#/components/responses/Forbidden' }
  */
 router.get('/admin/stats', protect, authorize('admin'), getAdminStats);
+
+/**
+ * @swagger
+ * /auth/admin/users:
+ *   get:
+ *     summary: List/search users
+ *     description: Admin-only.
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 20 }
+ *       - in: query
+ *         name: search
+ *         schema: { type: string }
+ *         description: Case-insensitive match against name or email
+ *     responses:
+ *       200:
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 users:
+ *                   type: array
+ *                   items: { $ref: '#/components/schemas/User' }
+ *                 page: { type: integer }
+ *                 limit: { type: integer }
+ *                 total: { type: integer }
+ *                 totalPages: { type: integer }
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ *       403: { $ref: '#/components/responses/Forbidden' }
+ */
+router.get('/admin/users', protect, authorize('admin'), listUsers);
+
+/**
+ * @swagger
+ * /auth/admin/users/{id}/role:
+ *   patch:
+ *     summary: Promote or demote a user
+ *     description: >
+ *       Admin-only. An admin cannot change their own role, and the last remaining admin
+ *       cannot be demoted.
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [role]
+ *             properties: { role: { type: string, enum: [user, admin] } }
+ *     responses:
+ *       200:
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/User' }
+ *       400: { $ref: '#/components/responses/ValidationError' }
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ *       403: { $ref: '#/components/responses/Forbidden' }
+ *       404: { $ref: '#/components/responses/NotFound' }
+ */
+router.patch(
+  '/admin/users/:id/role',
+  protect,
+  authorize('admin'),
+  validate(updateUserRoleSchema),
+  updateUserRole
+);
+
+/**
+ * @swagger
+ * /auth/admin/users/{id}/ban:
+ *   patch:
+ *     summary: Suspend or reinstate a user account
+ *     description: >
+ *       Admin-only. Suspending revokes every active session for that user immediately. An
+ *       admin cannot suspend themselves, and another admin must be demoted before they can
+ *       be suspended.
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [isBanned]
+ *             properties:
+ *               isBanned: { type: boolean }
+ *               reason: { type: string, maxLength: 280 }
+ *     responses:
+ *       200:
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/User' }
+ *       400: { $ref: '#/components/responses/ValidationError' }
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ *       403: { $ref: '#/components/responses/Forbidden' }
+ *       404: { $ref: '#/components/responses/NotFound' }
+ */
+router.patch(
+  '/admin/users/:id/ban',
+  protect,
+  authorize('admin'),
+  validate(updateUserBanSchema),
+  updateUserBanStatus
+);
 
 export default router;
